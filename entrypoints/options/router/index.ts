@@ -1,0 +1,37 @@
+import { createRouter, createWebHashHistory } from 'vue-router';
+
+const router = createRouter({
+  history: createWebHashHistory(),
+  routes: [
+    {
+      path: '/',
+      redirect: '/list'
+    },
+    {
+      path: '/list',
+      name: 'list',
+      component: () => import('../views/ListView.vue'),
+      meta: { title: '发布列表' }
+    },
+    {
+      path: '/editor',
+      name: 'editor',
+      component: () => import('../views/EditorView.vue'),
+      meta: { title: '发布文章' }
+    },
+    {
+      path: '/editor/:id',
+      name: 'edit',
+      component: () => import('../views/EditorView.vue'),
+      meta: { title: '编辑文章' }
+    },
+    {
+      path: '/preview/:id',
+      name: 'preview',
+      component: () => import('../views/PreviewView.vue'),
+      meta: { title: '文章预览' }
+    }
+  ]
+});
+
+export default router;
