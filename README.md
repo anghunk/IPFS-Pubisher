@@ -2,6 +2,8 @@
 
 一个简单的浏览器扩展，用于将 Markdown 文章发布到 IPFS 网络。
 
+![](./public/image.jpg)
+
 ## 功能
 
 - 编写 Markdown 文章并一键发布到 IPFS
