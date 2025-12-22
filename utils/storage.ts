@@ -110,3 +110,35 @@ export async function deleteRecord(id: string): Promise<boolean> {
 export async function clearRecords(): Promise<void> {
   await chrome.storage.local.set({ [STORAGE_KEY]: [] });
 }
+
+// ============ 设置存储 ============
+
+export interface Settings {
+  gateway: string;
+  apiEndpoint: string;
+}
+
+const SETTINGS_KEY = 'settings';
+
+const DEFAULT_SETTINGS: Settings = {
+  gateway: 'https://ipfs.io/ipfs/',
+  apiEndpoint: 'http://127.0.0.1:5001'
+};
+
+/**
+ * 获取设置
+ */
+export async function getSettings(): Promise<Settings> {
+  const result = await chrome.storage.local.get(SETTINGS_KEY);
+  return { ...DEFAULT_SETTINGS, ...result[SETTINGS_KEY] };
+}
+
+/**
+ * 保存设置
+ */
+export async function saveSettings(settings: Partial<Settings>): Promise<Settings> {
+  const current = await getSettings();
+  const updated = { ...current, ...settings };
+  await chrome.storage.local.set({ [SETTINGS_KEY]: updated });
+  return updated;
+}

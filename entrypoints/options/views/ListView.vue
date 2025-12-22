@@ -22,7 +22,7 @@
         </div>
         <p class="card-content">{{ truncate(record.content, 120) }}</p>
         <div class="card-footer">
-          <a :href="record.url" target="_blank" class="cid-link">
+          <a :href="getRecordUrl(record)" target="_blank" class="cid-link">
             <el-icon><Link /></el-icon>
             {{ record.cid.substring(0, 16) }}...
           </a>
@@ -33,7 +33,7 @@
               </el-button>
             </el-tooltip>
             <el-tooltip content="复制链接">
-              <el-button size="small" circle @click="copyLink(record.url)">
+              <el-button size="small" circle @click="copyLink(getRecordUrl(record))">
                 <el-icon><DocumentCopy /></el-icon>
               </el-button>
             </el-tooltip>
@@ -59,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { Plus, Link, DocumentCopy, Edit, Delete, View } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
@@ -68,10 +68,28 @@ import type { PublishRecord } from "../../../utils/storage";
 const emit = defineEmits(["update-count"]);
 const router = useRouter();
 const records = ref<PublishRecord[]>([]);
+const gateway = ref('https://ipfs.io/ipfs/');
 
 onMounted(async () => {
+  await loadSettings();
   await loadRecords();
 });
+
+async function loadSettings() {
+  try {
+    const response = await chrome.runtime.sendMessage({ action: 'getSettings' });
+    if (response.success && response.data.gateway) {
+      gateway.value = response.data.gateway;
+    }
+  } catch (e) {
+    console.error('Failed to load settings:', e);
+  }
+}
+
+// 动态生成 URL
+function getRecordUrl(record: PublishRecord): string {
+  return `${gateway.value}${record.cid}`;
+}
 
 async function loadRecords() {
   try {

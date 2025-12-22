@@ -3,13 +3,40 @@
  * 使用本地 IPFS Desktop 节点
  */
 
+import { getSettings } from './storage';
+
 export interface IpfsUploadResult {
   cid: string;
   url: string;
 }
 
-// IPFS API 地址
-const IPFS_API = 'http://127.0.0.1:5001/api/v0';
+// 默认 IPFS API 地址
+const DEFAULT_API = 'http://127.0.0.1:5001/api/v0';
+const DEFAULT_GATEWAY = 'https://ipfs.io/ipfs/';
+
+/**
+ * 获取 IPFS API 地址
+ */
+async function getApiEndpoint(): Promise<string> {
+  try {
+    const settings = await getSettings();
+    return settings.apiEndpoint ? `${settings.apiEndpoint}/api/v0` : DEFAULT_API;
+  } catch {
+    return DEFAULT_API;
+  }
+}
+
+/**
+ * 获取 IPFS 网关地址
+ */
+async function getGateway(): Promise<string> {
+  try {
+    const settings = await getSettings();
+    return settings.gateway || DEFAULT_GATEWAY;
+  } catch {
+    return DEFAULT_GATEWAY;
+  }
+}
 
 /**
  * 上传内容到 IPFS
@@ -22,8 +49,11 @@ export async function uploadToIpfs(content: string, filename: string, mimeType: 
   const blob = new Blob([content], { type: mimeType });
   formData.append('file', blob, filename);
 
+  const apiEndpoint = await getApiEndpoint();
+  const gateway = await getGateway();
+
   try {
-    const response = await fetch(`${IPFS_API}/add?pin=true`, {
+    const response = await fetch(`${apiEndpoint}/add?pin=true`, {
       method: 'POST',
       body: formData,
     });
@@ -41,7 +71,7 @@ export async function uploadToIpfs(content: string, filename: string, mimeType: 
 
     return {
       cid: cid,
-      url: `https://ipfs.io/ipfs/${cid}`,
+      url: `${gateway}${cid}`,
     };
   } catch (error: any) {
     console.error('Upload failed:', error);
@@ -54,7 +84,8 @@ export async function uploadToIpfs(content: string, filename: string, mimeType: 
  */
 export async function checkIpfsNode(): Promise<boolean> {
   try {
-    const response = await fetch(`${IPFS_API}/id`, {
+    const apiEndpoint = await getApiEndpoint();
+    const response = await fetch(`${apiEndpoint}/id`, {
       method: 'POST',
     });
     return response.ok;

@@ -1,5 +1,5 @@
 import { uploadToIpfs, checkIpfsNode } from '../utils/ipfs';
-import { addRecord, getRecords, getRecord, updateRecord, deleteRecord } from '../utils/storage';
+import { addRecord, getRecords, getRecord, updateRecord, deleteRecord, getSettings, saveSettings } from '../utils/storage';
 import { generateHtmlPage } from '../utils/template';
 
 // 定义消息类型接口
@@ -195,6 +195,36 @@ browserAPI.runtime.onMessage.addListener((request: any, sender, sendResponse) =>
       });
     });
     
+    return true;
+  }
+});
+
+// 获取设置
+browserAPI.runtime.onMessage.addListener((request: Message, sender, sendResponse) => {
+  if (request.action === 'getSettings') {
+    (async () => {
+      try {
+        const settings = await getSettings();
+        sendResponse({ success: true, data: settings });
+      } catch (error: any) {
+        sendResponse({ success: false, error: error.message });
+      }
+    })();
+    return true;
+  }
+});
+
+// 保存设置
+browserAPI.runtime.onMessage.addListener((request: any, sender, sendResponse) => {
+  if (request.action === 'saveSettings') {
+    (async () => {
+      try {
+        const settings = await saveSettings(request.data);
+        sendResponse({ success: true, data: settings });
+      } catch (error: any) {
+        sendResponse({ success: false, error: error.message });
+      }
+    })();
     return true;
   }
 });
