@@ -59,10 +59,10 @@ jobs:
 
         ---
        
-        使用方法:  
+       使用方法:  
         | 浏览器                          | 安装链接                                                                                      | 备注     |
         | ------------------------------- | --------------------------------------------------------------------------------------------- | -------- |
-        | **Chrome / Edge / Arc / Brave** | 暂无 | 推荐     |
+        | **Chrome / Edge / Arc / Brave** | [Chrome Web Store](https://chromewebstore.google.com/detail/boadlmdjnofefcpehbdjjmbggghejiga) | 推荐     |
         
         发布于：$CURRENT_DATE" \
         .output/*.zip
