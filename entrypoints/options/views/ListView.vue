@@ -2,15 +2,19 @@
   <div class="list-view">
     <div class="page-header">
       <div>
-        <h2>{{ $t('list.title') }}</h2>
-        <p class="subtitle">{{ $t('list.totalArticles', { count: records.length }) }}</p>
+        <h2>{{ $t("list.title") }}</h2>
+        <p class="subtitle">{{ $t("list.totalArticles", { count: records.length }) }}</p>
       </div>
-      <el-button type="primary" @click="goToEditor" size="large"> {{ $t('list.newArticle') }} </el-button>
+      <el-button type="primary" @click="goToEditor" size="large">
+        {{ $t("list.newArticle") }}
+      </el-button>
     </div>
 
     <div v-if="records.length === 0" class="empty-state">
       <el-empty :description="$t('list.emptyTitle')">
-        <el-button type="primary" @click="goToEditor">{{ $t('list.publishNow') }}</el-button>
+        <el-button type="primary" @click="goToEditor">{{
+          $t("list.publishNow")
+        }}</el-button>
       </el-empty>
     </div>
 
@@ -28,7 +32,12 @@
           </a>
           <div class="card-actions">
             <el-tooltip :content="$t('list.preview')">
-              <el-button size="small" circle type="success" @click="previewRecord(record)">
+              <el-button
+                size="small"
+                circle
+                type="success"
+                @click="previewRecord(record)"
+              >
                 <el-icon><View /></el-icon>
               </el-button>
             </el-tooltip>
@@ -42,7 +51,11 @@
                 <el-icon><Edit /></el-icon>
               </el-button>
             </el-tooltip>
-            <el-popconfirm :title="$t('list.deleteConfirm')" @confirm="handleDelete(record.id)" width="200">
+            <el-popconfirm
+              :title="$t('list.deleteConfirm')"
+              @confirm="handleDelete(record.id)"
+              width="200"
+            >
               <template #reference>
                 <el-button size="small" circle type="danger">
                   <el-icon><Delete /></el-icon>
@@ -61,7 +74,7 @@ import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { Plus, Link, DocumentCopy, Edit, Delete, View } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
-import { useI18n } from 'vue-i18n';
+import { useI18n } from "vue-i18n";
 import type { PublishRecord } from "../../../utils/storage";
 
 const { t } = useI18n();
@@ -69,7 +82,7 @@ const { t } = useI18n();
 const emit = defineEmits(["update-count"]);
 const router = useRouter();
 const records = ref<PublishRecord[]>([]);
-const gateway = ref('https://ipfs.io/ipfs/');
+const gateway = ref("https://ipfs.io/ipfs/");
 
 onMounted(async () => {
   await loadSettings();
@@ -78,12 +91,12 @@ onMounted(async () => {
 
 async function loadSettings() {
   try {
-    const response = await chrome.runtime.sendMessage({ action: 'getSettings' });
+    const response = await chrome.runtime.sendMessage({ action: "getSettings" });
     if (response.success && response.data.gateway) {
       gateway.value = response.data.gateway;
     }
   } catch (e) {
-    console.error('Failed to load settings:', e);
+    console.error("Failed to load settings:", e);
   }
 }
 
@@ -121,16 +134,16 @@ async function handleDelete(id: string) {
     const response = await chrome.runtime.sendMessage({ action: "deleteRecord", id });
     if (response.success) {
       await loadRecords();
-      ElMessage.success(t('list.deleteSuccess'));
+      ElMessage.success(t("list.deleteSuccess"));
     }
   } catch (e) {
-    ElMessage.error(t('list.deleteFailed'));
+    ElMessage.error(t("list.deleteFailed"));
   }
 }
 
 async function copyLink(url: string) {
   await navigator.clipboard.writeText(url);
-  ElMessage.success(t('editor.linkCopied'));
+  ElMessage.success(t("editor.linkCopied"));
 }
 
 function formatDate(timestamp: number): string {
@@ -256,12 +269,12 @@ function truncate(text: string, length: number): string {
       font-size: 22px;
     }
   }
-  
+
   .record-grid {
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 16px;
   }
-  
+
   .record-card {
     padding: 16px;
   }
@@ -272,45 +285,45 @@ function truncate(text: string, length: number): string {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
-    
+
     h2 {
       font-size: 20px;
     }
-    
+
     .el-button {
       width: 100%;
     }
   }
-  
+
   .record-grid {
     grid-template-columns: 1fr;
     gap: 12px;
   }
-  
+
   .record-card {
     padding: 14px;
-    
+
     .card-header {
       flex-direction: column;
       gap: 4px;
-      
+
       .card-date {
         margin-left: 0;
       }
     }
-    
+
     .card-footer {
       flex-direction: column;
       gap: 12px;
       align-items: flex-start;
-      
+
       .card-actions {
         width: 100%;
         justify-content: flex-end;
       }
     }
   }
-  
+
   .empty-state {
     padding: 40px 20px;
   }
@@ -319,24 +332,24 @@ function truncate(text: string, length: number): string {
 @media (max-width: 480px) {
   .page-header {
     margin-bottom: 16px;
-    
+
     h2 {
       font-size: 18px;
     }
-    
+
     .subtitle {
       font-size: 12px;
     }
   }
-  
+
   .record-card {
     padding: 12px;
     border-radius: 10px;
-    
+
     .card-header h3 {
       font-size: 14px;
     }
-    
+
     .card-content {
       font-size: 13px;
       margin-bottom: 12px;

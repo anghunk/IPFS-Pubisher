@@ -6,41 +6,41 @@ import en from '../locales/en.json';
 
 // 语言资源
 const messages = {
-  zh,
-  en,
+	zh,
+	en,
 };
 
 // 获取浏览器语言
 function getBrowserLanguage(): string {
-  const lang = navigator.language.toLowerCase();
-  if (lang.startsWith('zh')) {
-    return 'zh';
-  }
-  return 'en';
+	const lang = navigator.language.toLowerCase();
+	if (lang.startsWith('zh')) {
+		return 'zh';
+	}
+	return 'en';
 }
 
 // 获取保存的语言设置
 async function getSavedLanguage(): Promise<string> {
-  try {
-    const result = await chrome.storage.local.get('language');
-    return result.language || 'auto';
-  } catch (e) {
-    return 'auto';
-  }
+	try {
+		const result = await chrome.storage.local.get('language');
+		return result.language || 'auto';
+	} catch (e) {
+		return 'auto';
+	}
 }
 
 // 创建 i18n 实例
 export async function createI18nInstance() {
-  const savedLang = await getSavedLanguage();
-  const locale = savedLang === 'auto' ? getBrowserLanguage() : savedLang;
-  
-  return createI18n({
-    legacy: false,
-    locale,
-    fallbackLocale: 'en',
-    messages,
-    globalInjection: true, // 启用全局 $t 函数
-  });
+	const savedLang = await getSavedLanguage();
+	const locale = savedLang === 'auto' ? getBrowserLanguage() : savedLang;
+
+	return createI18n({
+		legacy: false,
+		locale,
+		fallbackLocale: 'en',
+		messages,
+		globalInjection: true, // 启用全局 $t 函数
+	});
 }
 
 export { getBrowserLanguage, getSavedLanguage };

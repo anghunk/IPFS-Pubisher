@@ -1,8 +1,8 @@
 <template>
   <div class="help-view">
     <div class="page-header">
-      <h2>{{ $t('help.title') }}</h2>
-      <p class="subtitle">{{ $t('help.subtitle') }}</p>
+      <h2>{{ $t("help.title") }}</h2>
+      <p class="subtitle">{{ $t("help.subtitle") }}</p>
     </div>
 
     <div class="help-card">
@@ -10,10 +10,14 @@
       <div class="help-section">
         <div class="step-number">1</div>
         <div class="step-content">
-          <h3>{{ $t('help.step1Title') }}</h3>
-          <p>{{ $t('help.step1Desc') }}</p>
-          <a href="https://docs.ipfs.tech/install/ipfs-desktop/" target="_blank" class="download-link">
-            {{ $t('help.downloadIpfs') }} →
+          <h3>{{ $t("help.step1Title") }}</h3>
+          <p>{{ $t("help.step1Desc") }}</p>
+          <a
+            href="https://docs.ipfs.tech/install/ipfs-desktop/"
+            target="_blank"
+            class="download-link"
+          >
+            {{ $t("help.downloadIpfs") }} →
           </a>
         </div>
       </div>
@@ -22,12 +26,14 @@
       <div class="help-section">
         <div class="step-number">2</div>
         <div class="step-content">
-          <h3>{{ $t('help.step2Title') }}</h3>
-          <p>{{ $t('help.step2Desc') }}</p>
+          <h3>{{ $t("help.step2Title") }}</h3>
+          <p>{{ $t("help.step2Desc") }}</p>
           <div class="check-item">
             <span class="check-icon">✓</span>
-            <span>{{ $t('help.checkWebui') }}</span>
-            <a href="http://127.0.0.1:5001/webui/" target="_blank">http://127.0.0.1:5001/webui/</a>
+            <span>{{ $t("help.checkWebui") }}</span>
+            <a href="http://127.0.0.1:5001/webui/" target="_blank"
+              >http://127.0.0.1:5001/webui/</a
+            >
           </div>
         </div>
       </div>
@@ -36,24 +42,26 @@
       <div class="help-section">
         <div class="step-number">3</div>
         <div class="step-content">
-          <h3>{{ $t('help.step3Title') }}</h3>
-          <p>{{ $t('help.step3Desc') }}</p>
-          
+          <h3>{{ $t("help.step3Title") }}</h3>
+          <p>{{ $t("help.step3Desc") }}</p>
+
           <div class="config-steps">
-            <p class="config-step">{{ $t('help.configStep1') }}</p>
-            <p class="config-step">{{ $t('help.configStep2') }}</p>
-            <p class="config-step">{{ $t('help.configStep3') }}</p>
+            <p class="config-step">{{ $t("help.configStep1") }}</p>
+            <p class="config-step">{{ $t("help.configStep2") }}</p>
+            <p class="config-step">{{ $t("help.configStep3") }}</p>
           </div>
 
           <div class="code-block">
             <div class="code-header">
               <span>API.HTTPHeaders</span>
-              <el-button size="small" @click="copyConfig">{{ copied ? $t('common.copied') : $t('common.copy') }}</el-button>
+              <el-button size="small" @click="copyConfig">{{
+                copied ? $t("common.copied") : $t("common.copy")
+              }}</el-button>
             </div>
             <pre><code>{{ configCode }}</code></pre>
           </div>
-          
-          <p class="warning-text">{{ $t('help.restartNote') }}</p>
+
+          <p class="warning-text">{{ $t("help.restartNote") }}</p>
         </div>
       </div>
 
@@ -61,14 +69,18 @@
       <div class="help-section">
         <div class="step-number">4</div>
         <div class="step-content">
-          <h3>{{ $t('help.step4Title') }}</h3>
-          <p>{{ $t('help.step4Desc') }}</p>
-          
+          <h3>{{ $t("help.step4Title") }}</h3>
+          <p>{{ $t("help.step4Desc") }}</p>
+
           <div class="status-check">
             <span class="status-dot" :class="nodeStatus"></span>
-            <span>{{ nodeStatus === 'connected' ? $t('nav.ipfsConnected') : $t('nav.ipfsDisconnected') }}</span>
+            <span>{{
+              nodeStatus === "connected"
+                ? $t("nav.ipfsConnected")
+                : $t("nav.ipfsDisconnected")
+            }}</span>
             <el-button size="small" @click="checkConnection" :loading="checking">
-              {{ $t('help.recheck') }}
+              {{ $t("help.recheck") }}
             </el-button>
           </div>
         </div>
@@ -78,13 +90,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { ElMessage } from 'element-plus';
-import { useI18n } from 'vue-i18n';
+import { ref, onMounted } from "vue";
+import { ElMessage } from "element-plus";
+import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
 
-const nodeStatus = ref<'connected' | 'disconnected'>('disconnected');
+const nodeStatus = ref<"connected" | "disconnected">("disconnected");
 const checking = ref(false);
 const copied = ref(false);
 
@@ -109,10 +121,10 @@ onMounted(async () => {
 async function checkConnection() {
   checking.value = true;
   try {
-    const response = await chrome.runtime.sendMessage({ action: 'checkNode' });
-    nodeStatus.value = response.available ? 'connected' : 'disconnected';
+    const response = await chrome.runtime.sendMessage({ action: "checkNode" });
+    nodeStatus.value = response.available ? "connected" : "disconnected";
   } catch {
-    nodeStatus.value = 'disconnected';
+    nodeStatus.value = "disconnected";
   } finally {
     checking.value = false;
   }
@@ -122,19 +134,19 @@ async function copyConfig() {
   try {
     await navigator.clipboard.writeText(configCode);
     copied.value = true;
-    ElMessage.success(t('common.copied'));
+    ElMessage.success(t("common.copied"));
     setTimeout(() => {
       copied.value = false;
     }, 2000);
   } catch {
-    ElMessage.error('复制失败');
+    ElMessage.error("复制失败");
   }
 }
 </script>
 
 <style scoped lang="less">
-@primary: #F5D104;
-@primary-dark: #D4B503;
+@primary: #f5d104;
+@primary-dark: #d4b503;
 @bg-dark: #1a1a2e;
 
 .help-view {
@@ -143,14 +155,14 @@ async function copyConfig() {
 
 .page-header {
   margin-bottom: 24px;
-  
+
   h2 {
     margin: 0 0 4px 0;
     font-size: 24px;
     color: @bg-dark;
     font-weight: 600;
   }
-  
+
   .subtitle {
     margin: 0;
     font-size: 14px;
@@ -170,11 +182,11 @@ async function copyConfig() {
   gap: 20px;
   padding: 24px 0;
   border-bottom: 1px solid #e5e7eb;
-  
+
   &:first-child {
     padding-top: 0;
   }
-  
+
   &:last-child {
     border-bottom: none;
     padding-bottom: 0;
@@ -197,14 +209,14 @@ async function copyConfig() {
 
 .step-content {
   flex: 1;
-  
+
   h3 {
     margin: 0 0 8px 0;
     font-size: 16px;
     color: @bg-dark;
     font-weight: 600;
   }
-  
+
   p {
     margin: 0 0 12px 0;
     font-size: 14px;
@@ -218,7 +230,7 @@ async function copyConfig() {
   color: @primary-dark;
   font-weight: 500;
   text-decoration: none;
-  
+
   &:hover {
     text-decoration: underline;
   }
@@ -232,12 +244,12 @@ async function copyConfig() {
   background: #f9fafb;
   border-radius: 8px;
   font-size: 14px;
-  
+
   .check-icon {
     color: #22c55e;
     font-weight: bold;
   }
-  
+
   a {
     color: @primary-dark;
     margin-left: auto;
@@ -246,7 +258,7 @@ async function copyConfig() {
 
 .config-steps {
   margin-bottom: 16px;
-  
+
   .config-step {
     margin: 0;
     padding: 8px 0;
@@ -254,7 +266,7 @@ async function copyConfig() {
     position: relative;
     font-size: 14px;
     color: #374151;
-    
+
     &::before {
       content: "•";
       position: absolute;
@@ -269,28 +281,28 @@ async function copyConfig() {
   border-radius: 8px;
   overflow: hidden;
   margin-bottom: 12px;
-  
+
   .code-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 8px 16px;
     background: #2d2d2d;
-    
+
     span {
       color: #9ca3af;
       font-size: 12px;
     }
   }
-  
+
   pre {
     margin: 0;
     padding: 16px;
     overflow-x: auto;
-    
+
     code {
       color: #e5e7eb;
-      font-family: 'Consolas', 'Monaco', monospace;
+      font-family: "Consolas", "Monaco", monospace;
       font-size: 13px;
       line-height: 1.5;
     }
@@ -303,7 +315,7 @@ async function copyConfig() {
   display: flex;
   align-items: center;
   gap: 6px;
-  
+
   &::before {
     content: "⚠️";
   }
@@ -316,13 +328,13 @@ async function copyConfig() {
   padding: 16px;
   background: #f9fafb;
   border-radius: 8px;
-  
+
   .status-dot {
     width: 10px;
     height: 10px;
     border-radius: 50%;
     background: #ef4444;
-    
+
     &.connected {
       background: #22c55e;
     }
@@ -333,12 +345,12 @@ async function copyConfig() {
   .help-card {
     padding: 24px 20px;
   }
-  
+
   .help-section {
     flex-direction: column;
     gap: 12px;
   }
-  
+
   .step-number {
     width: 32px;
     height: 32px;

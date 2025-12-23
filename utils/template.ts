@@ -7,9 +7,9 @@ import { marked } from 'marked';
 
 // 配置 marked 为同步模式
 marked.setOptions({
-  async: false,
-  gfm: true,
-  breaks: true
+	async: false,
+	gfm: true,
+	breaks: true,
 });
 
 // 文章页面的 CSS 样式
@@ -265,24 +265,24 @@ body {
  * @param createdAt 创建时间戳
  */
 export function generateHtmlPage(title: string, content: string, createdAt?: number): string {
-  const htmlContent = marked.parse(content) as string;
-  const dateStr = createdAt 
-    ? new Date(createdAt).toLocaleString('zh-CN', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-    : new Date().toLocaleString('zh-CN', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
+	const htmlContent = marked.parse(content) as string;
+	const dateStr = createdAt
+		? new Date(createdAt).toLocaleString('zh-CN', {
+				year: 'numeric',
+				month: 'long',
+				day: 'numeric',
+				hour: '2-digit',
+				minute: '2-digit',
+		  })
+		: new Date().toLocaleString('zh-CN', {
+				year: 'numeric',
+				month: 'long',
+				day: 'numeric',
+				hour: '2-digit',
+				minute: '2-digit',
+		  });
 
-  return `<!DOCTYPE html>
+	return `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -323,14 +323,14 @@ export function generateHtmlPage(title: string, content: string, createdAt?: num
  * HTML 转义
  */
 function escapeHtml(text: string): string {
-  const map: Record<string, string> = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;'
-  };
-  return text.replace(/[&<>"']/g, m => map[m]);
+	const map: Record<string, string> = {
+		'&': '&amp;',
+		'<': '&lt;',
+		'>': '&gt;',
+		'"': '&quot;',
+		"'": '&#039;',
+	};
+	return text.replace(/[&<>"']/g, (m) => map[m]);
 }
 
 // 列表页样式
@@ -479,11 +479,11 @@ body {
 `;
 
 export interface ListPageRecord {
-  id: string;
-  title: string;
-  content: string;
-  cid: string;
-  createdAt: number;
+	id: string;
+	title: string;
+	content: string;
+	cid: string;
+	createdAt: number;
 }
 
 /**
@@ -492,29 +492,34 @@ export interface ListPageRecord {
  * @param gateway IPFS 网关地址
  */
 export function generateListPage(records: ListPageRecord[], gateway: string): string {
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleDateString('zh-CN', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-  
-  const truncate = (text: string, length: number) => {
-    return text.length > length ? text.substring(0, length) + '...' : text;
-  };
-  
-  const articleCards = records.length > 0 
-    ? records.map(record => `
+	const formatDate = (timestamp: number) => {
+		return new Date(timestamp).toLocaleDateString('zh-CN', {
+			year: 'numeric',
+			month: 'long',
+			day: 'numeric',
+		});
+	};
+
+	const truncate = (text: string, length: number) => {
+		return text.length > length ? text.substring(0, length) + '...' : text;
+	};
+
+	const articleCards =
+		records.length > 0
+			? records
+					.map(
+						(record) => `
       <a href="${gateway}${record.cid}" target="_blank" class="article-card">
         <h2>${escapeHtml(record.title)}</h2>
         <div class="meta">发布于 ${formatDate(record.createdAt)}</div>
         <p class="preview">${escapeHtml(truncate(record.content, 150))}</p>
       </a>
-    `).join('')
-    : '<div class="empty">还没有发布任何文章</div>';
+    `,
+					)
+					.join('')
+			: '<div class="empty">还没有发布任何文章</div>';
 
-  return `<!DOCTYPE html>
+	return `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">

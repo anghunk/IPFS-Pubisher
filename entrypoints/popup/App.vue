@@ -3,18 +3,25 @@
     <div class="logo">
       <img src="/icon/128.png" alt="IPFS Publisher" />
     </div>
-    <h2>{{ $t('popup.title') }}</h2>
-    <p class="desc">{{ $t('popup.description') }}</p>
+    <h2>{{ $t("popup.title") }}</h2>
+    <p class="desc">{{ $t("popup.description") }}</p>
 
     <el-button type="primary" @click="openPublisher" class="open-btn">
-      {{ $t('popup.openPublisher') }}
+      {{ $t("popup.openPublisher") }}
     </el-button>
 
     <div class="status-indicator" :class="nodeStatus">
       <span class="dot"></span>
-      <span>{{ nodeStatus === 'connected' ? $t('nav.ipfsConnected') : $t('nav.ipfsDisconnected') }}</span>
-      <a v-if="nodeStatus === 'disconnected'" href="#" @click.prevent="openHelp" class="help-link">
-        {{ $t('popup.helpLink') }}
+      <span>{{
+        nodeStatus === "connected" ? $t("nav.ipfsConnected") : $t("nav.ipfsDisconnected")
+      }}</span>
+      <a
+        v-if="nodeStatus === 'disconnected'"
+        href="#"
+        @click.prevent="openHelp"
+        class="help-link"
+      >
+        {{ $t("popup.helpLink") }}
       </a>
     </div>
   </div>
@@ -41,7 +48,7 @@ function openPublisher() {
 }
 
 function openHelp() {
-  const extensionURL = chrome.runtime.getURL('options.html#/help');
+  const extensionURL = chrome.runtime.getURL("options.html#/help");
   chrome.tabs.create({ url: extensionURL });
   window.close();
 }
@@ -89,24 +96,24 @@ function openHelp() {
     margin-top: 16px;
     font-size: 12px;
     color: #6b7280;
-    
+
     .dot {
       width: 8px;
       height: 8px;
       border-radius: 50%;
       background: #ef4444;
     }
-    
+
     &.connected .dot {
       background: #22c55e;
     }
-    
+
     .help-link {
       margin-left: 6px;
       color: #3b82f6;
       font-size: 12px;
       text-decoration: none;
-      
+
       &:hover {
         text-decoration: underline;
       }
