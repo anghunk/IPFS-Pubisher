@@ -13,6 +13,9 @@
     <div class="status-indicator" :class="nodeStatus">
       <span class="dot"></span>
       <span>{{ nodeStatus === 'connected' ? $t('nav.ipfsConnected') : $t('nav.ipfsDisconnected') }}</span>
+      <a v-if="nodeStatus === 'disconnected'" href="#" @click.prevent="openHelp" class="help-link">
+        {{ $t('popup.helpLink') }}
+      </a>
     </div>
   </div>
 </template>
@@ -34,6 +37,12 @@ onMounted(async () => {
 
 function openPublisher() {
   chrome.runtime.sendMessage({ action: "open_options_page" });
+  window.close();
+}
+
+function openHelp() {
+  const extensionURL = chrome.runtime.getURL('options.html#/help');
+  chrome.tabs.create({ url: extensionURL });
   window.close();
 }
 </script>
@@ -90,6 +99,17 @@ function openPublisher() {
     
     &.connected .dot {
       background: #22c55e;
+    }
+    
+    .help-link {
+      margin-left: 6px;
+      color: #3b82f6;
+      font-size: 12px;
+      text-decoration: none;
+      
+      &:hover {
+        text-decoration: underline;
+      }
     }
   }
 }

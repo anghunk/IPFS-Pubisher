@@ -17,12 +17,14 @@
     "list": "Articles",
     "settings": "Settings",
     "ipfsConnected": "IPFS Connected",
-    "ipfsDisconnected": "IPFS Disconnected"
+    "ipfsDisconnected": "IPFS Disconnected",
+    "help": "Help"
   },
   "popup": {
     "title": "IPFS Publisher",
     "description": "One-click browser extension to publish Markdown to IPFS",
-    "openPublisher": "Open Publisher"
+    "openPublisher": "Open Publisher",
+    "helpLink": "How to connect?"
   },
   "editor": {
     "title": "Publish Article",
@@ -88,6 +90,30 @@
     "saveSettings": "Save Settings",
     "settingsSaved": "Settings saved",
     "saveFailed": "Save failed",
-    "enterGateway": "Please enter gateway address"
+    "enterGateway": "Please enter gateway address",
+    "aboutSection": "About",
+    "aboutDesc": "Learn more about IPFS Publisher",
+    "version": "Version",
+    "webStore": "Web Store",
+    "addons": "Add-ons"
+  },
+  "help": {
+    "title": "IPFS Connection Guide",
+    "subtitle": "Follow these steps to configure your local IPFS node",
+    "step1Title": "Install IPFS Desktop",
+    "step1Desc": "IPFS Desktop is a graphical IPFS node application that provides simple node management and file upload features.",
+    "downloadIpfs": "Download IPFS Desktop",
+    "step2Title": "Start IPFS Desktop",
+    "step2Desc": "After installation, start IPFS Desktop and make sure the node is running properly.",
+    "checkWebui": "Check if node is running: visit",
+    "step3Title": "Configure Cross-Origin Access (CORS)",
+    "step3Desc": "Browser extensions require IPFS node to allow cross-origin access. Please configure as follows:",
+    "configStep1": "Open IPFS Desktop Settings",
+    "configStep2": "Find IPFS CONFIG section and click to edit the config file",
+    "configStep3": "Find the \"API\" section and add or modify to the following content:",
+    "restartNote": "You need to restart IPFS Desktop after saving the configuration",
+    "step4Title": "Verify Connection",
+    "step4Desc": "After restarting IPFS Desktop, click the button below to verify if the connection is successful.",
+    "recheck": "Recheck"
   }
 }

@@ -17,12 +17,14 @@
     "list": "发布列表",
     "settings": "设置",
     "ipfsConnected": "IPFS 已连接",
-    "ipfsDisconnected": "IPFS 未连接"
+    "ipfsDisconnected": "IPFS 未连接",
+    "help": "帮助"
   },
   "popup": {
     "title": "IPFS Publisher",
     "description": "一键发布 Markdown 内容到 IPFS 的浏览器扩展",
-    "openPublisher": "打开发布器"
+    "openPublisher": "打开发布器",
+    "helpLink": "如何连接?"
   },
   "editor": {
     "title": "文章发布",
@@ -88,6 +90,30 @@
     "saveSettings": "保存设置",
     "settingsSaved": "设置已保存",
     "saveFailed": "保存失败",
-    "enterGateway": "请输入网关地址"
+    "enterGateway": "请输入网关地址",
+    "aboutSection": "关于",
+    "aboutDesc": "了解更多关于 IPFS Publisher 的信息",
+    "version": "版本",
+    "webStore": "应用商店",
+    "addons": "附加组件"
+  },
+  "help": {
+    "title": "IPFS 连接教程",
+    "subtitle": "按照以下步骤配置本地 IPFS 节点",
+    "step1Title": "安装 IPFS Desktop",
+    "step1Desc": "IPFS Desktop 是一个图形化的 IPFS 节点应用，提供简单的节点管理和文件上传功能。",
+    "downloadIpfs": "下载 IPFS Desktop",
+    "step2Title": "启动 IPFS Desktop",
+    "step2Desc": "安装完成后启动 IPFS Desktop，确保节点运行正常。",
+    "checkWebui": "检查节点是否运行：访问",
+    "step3Title": "配置跨域访问 (CORS)",
+    "step3Desc": "浏览器扩展需要 IPFS 节点允许跨域访问。请按以下步骤配置：",
+    "configStep1": "打开 IPFS Desktop 的设置 (Settings)",
+    "configStep2": "找到 IPFS CONFIG 部分，点击编辑配置文件",
+    "configStep3": "找到 \"API\" 部分，添加或修改为以下内容：",
+    "restartNote": "保存配置后需要重启 IPFS Desktop",
+    "step4Title": "验证连接",
+    "step4Desc": "重启 IPFS Desktop 后，点击下方按钮验证连接是否成功。",
+    "recheck": "重新检测"
   }
 }

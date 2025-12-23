@@ -28,6 +28,9 @@
         <div class="status-indicator" :class="nodeStatus">
           <span class="dot"></span>
           <span>{{ nodeStatus === 'connected' ? $t('nav.ipfsConnected') : $t('nav.ipfsDisconnected') }}</span>
+          <router-link v-if="nodeStatus === 'disconnected'" to="/help" class="help-link">
+            {{ $t('nav.help') }}
+          </router-link>
         </div>
       </div>
     </aside>
@@ -93,13 +96,17 @@ async function checkNode() {
   .sidebar-header {
     padding: 24px 20px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+      margin-bottom: 12px;
     
     .logo {
       width: 48px;
       height: 48px;
       border-radius: 12px;
       overflow: hidden;
-      margin-bottom: 12px;
+      margin-right: 10px;
       
       img {
         width: 100%;
@@ -177,6 +184,17 @@ async function checkNode() {
       
       &.connected .dot {
         background: #22c55e;
+      }
+      
+      .help-link {
+        margin-left: auto;
+        color: #60a5fa;
+        font-size: 12px;
+        text-decoration: none;
+        
+        &:hover {
+          text-decoration: underline;
+        }
       }
     }
   }
