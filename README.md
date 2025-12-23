@@ -4,6 +4,8 @@
 
 ![](./public/image.jpg)
 
+商店目前在审核中，beta 版请下载 releases.
+
 ## 功能
 
 - 编写 Markdown 内容并一键发布到 IPFS
