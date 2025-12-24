@@ -7,14 +7,26 @@
           {{ $t("preview.backToList") }}
         </el-button>
       </div>
-      <div class="header-actions">
-        <el-button @click="copyLink" size="large">
-          <el-icon><DocumentCopy /></el-icon>
-          {{ $t("preview.copyLink") }}
-        </el-button>
-        <el-button type="primary" @click="openLink" size="large">
+      <!-- 链接显示区域 -->
+      <div v-if="record?.status === 'published'" class="article-links">
+        <!-- 永久链接 -->
+        <el-button
+          v-if="record?.ipnsUrl"
+          @click="openUrl(record.ipnsUrl)"
+          class="link-btn permanent"
+        >
           <el-icon><Link /></el-icon>
-          {{ $t("preview.visitIpfs") }}
+          永久链接
+        </el-button>
+
+        <!-- CID 链接 -->
+        <el-button
+          v-if="record?.cid && record?.url"
+          @click="openUrl(record.url)"
+          class="link-btn cid"
+        >
+          <el-icon><Link /></el-icon>
+          CID 链接
         </el-button>
       </div>
     </div>
@@ -32,9 +44,8 @@
               <el-icon><Calendar /></el-icon>
               {{ formatDate(record.createdAt) }}
             </span>
-            <span class="meta-item cid">
-              <el-icon><Link /></el-icon>
-              {{ record.cid }}
+            <span class="meta-item status-badge" :class="record.status">
+              {{ record.status === "published" ? "已发布" : "草稿" }}
             </span>
           </div>
         </header>
@@ -96,6 +107,12 @@ function goBack() {
   router.push("/list");
 }
 
+function openUrl(url: string | undefined) {
+  if (url) {
+    window.open(url, "_blank");
+  }
+}
+
 function openLink() {
   if (record.value) {
     window.open(record.value.url, "_blank");
@@ -104,13 +121,18 @@ function openLink() {
 
 async function copyLink() {
   if (record.value) {
-    await navigator.clipboard.writeText(record.value.url);
+    await navigator.clipboard.writeText(record.value.url || "");
     ElMessage.success(t("preview.linkCopied"));
   }
 }
 
 function formatDate(timestamp: number): string {
   return new Date(timestamp).toLocaleString("zh-CN");
+}
+
+function truncateCid(cid: string): string {
+  if (cid.length <= 20) return cid;
+  return cid.substring(0, 10) + "..." + cid.substring(cid.length - 8);
 }
 </script>
 
@@ -166,6 +188,7 @@ function formatDate(timestamp: number): string {
       display: flex;
       flex-wrap: wrap;
       gap: 20px;
+      align-items: center;
 
       .meta-item {
         display: flex;
@@ -173,11 +196,22 @@ function formatDate(timestamp: number): string {
         gap: 6px;
         font-size: 13px;
         color: #6b7280;
+      }
 
-        &.cid {
-          font-family: monospace;
-          font-size: 12px;
-          color: @primary-dark;
+      .status-badge {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+
+        &.published {
+          background: #dcfce7;
+          color: #16a34a;
+        }
+
+        &.draft {
+          background: #f3f4f6;
+          color: #6b7280;
         }
       }
     }
@@ -190,6 +224,49 @@ function formatDate(timestamp: number): string {
   }
 }
 
+.article-links {
+  margin-top: 16px;
+  display: flex;
+  gap: 10px;
+}
+
+.link-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 5px;
+  height: auto;
+  font-size: 13px;
+  font-weight: 500;
+  justify-content: flex-start;
+  background: @primary;
+  border: 1px solid @primary-dark;
+  color: @bg-dark;
+
+  &:hover {
+    background: @primary-dark;
+    border-color: @primary-dark;
+  }
+
+  .link-url {
+    font-size: 12px;
+    font-weight: 400;
+    margin-left: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 400px;
+    color: @bg-dark;
+    opacity: 0.8;
+  }
+
+  &.cid {
+    .link-url {
+      font-family: "Monaco", "Menlo", monospace;
+    }
+  }
+}
 .empty-state {
   background: #fff;
   border-radius: 16px;

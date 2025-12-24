@@ -607,12 +607,13 @@ browserAPI.runtime.onMessage.addListener((request: any, sender, sendResponse) =>
 					r => topic.articleIds.includes(r.id) && r.status === 'published' && r.cid
 				);
 
-				// 转换为列表页格式
+				// 转换为列表页格式，使用 ipnsUrl 永久链接
 				const listRecords = topicRecords.map(r => ({
 					id: r.id,
 					title: r.title,
 					content: r.content,
 					cid: r.cid!,
+					ipnsUrl: r.ipnsUrl,
 					createdAt: r.createdAt,
 				}));
 

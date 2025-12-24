@@ -355,7 +355,7 @@ export function generateTopicListPage(
 			? records
 					.map(
 						(record) => `
-      <a href="${gateway}${record.cid}" target="_blank" class="article-card">
+      <a href="${record.ipnsUrl || gateway + record.cid}" target="_blank" class="article-card">
         <h2>${escapeHtml(record.title)}</h2>
         <div class="meta">发布于 ${formatDate(record.createdAt)}</div>
         <p class="preview">${escapeHtml(truncate(record.content, 150))}</p>
@@ -579,6 +579,7 @@ export interface ListPageRecord {
 	title: string;
 	content: string;
 	cid: string;
+	ipnsUrl?: string;
 	createdAt: number;
 }
 
