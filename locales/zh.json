@@ -62,7 +62,8 @@
     "copyLink": "复制链接",
     "visitIpfs": "访问 IPFS",
     "articleNotFound": "文章不存在",
-    "linkCopied": "链接已复制"
+    "linkCopied": "链接已复制",
+    "editArticle": "编辑文章"
   },
   "settings": {
     "title": "设置",

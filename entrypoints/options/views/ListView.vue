@@ -111,7 +111,6 @@
             </el-tooltip>
 
             <el-tooltip
-              v-if="record.status === 'published'"
               :content="$t('list.preview')"
             >
               <el-button

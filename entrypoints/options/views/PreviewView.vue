@@ -1,10 +1,12 @@
 <template>
   <div class="preview-view">
     <div class="page-header">
-      <div class="header-left">
-        <el-button @click="goBack" size="large">
-          <el-icon><ArrowLeft /></el-icon>
+      <div class="header-left article-links">
+        <el-button @click="goBack" size="large" class="link-btn">
           {{ $t("preview.backToList") }}
+        </el-button>
+        <el-button @click="goToEditor" type="primary" size="large" class="link-btn">
+          {{ $t("preview.editArticle") }}
         </el-button>
       </div>
       <!-- 链接显示区域 -->
@@ -66,7 +68,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { ArrowLeft, Link, DocumentCopy, Calendar } from "@element-plus/icons-vue";
+import { ArrowLeft, Link, DocumentCopy, Calendar, Edit } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { marked } from "marked";
@@ -105,6 +107,12 @@ async function loadRecord() {
 
 function goBack() {
   router.push("/list");
+}
+
+function goToEditor() {
+  if (record.value) {
+    router.push(`/editor/${record.value.id}`);
+  }
 }
 
 function openUrl(url: string | undefined) {

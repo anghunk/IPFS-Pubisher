@@ -62,7 +62,8 @@
     "copyLink": "Copy Link",
     "visitIpfs": "Visit IPFS",
     "articleNotFound": "Article not found",
-    "linkCopied": "Link copied"
+    "linkCopied": "Link copied",
+    "editArticle": "Edit Article"
   },
   "settings": {
     "title": "Settings",

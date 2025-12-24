@@ -98,9 +98,7 @@
             <a :href="selectedTopic.ipnsUrl" target="_blank" class="ipns-link">
               {{ selectedTopic.ipnsUrl }}
             </a>
-            <el-button size="small" text @click="copyLink(selectedTopic.ipnsUrl)"
-              >复制</el-button
-            >
+          
             <el-button
               type="warning"
               size="small"
