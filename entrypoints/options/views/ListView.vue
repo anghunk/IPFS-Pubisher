@@ -123,18 +123,6 @@
                 <el-icon><View /></el-icon>
               </el-button>
             </el-tooltip>
-            <el-tooltip
-              v-if="record.status === 'published'"
-              :content="record.ipnsUrl ? '复制永久链接' : $t('list.copyLink')"
-            >
-              <el-button
-                size="small"
-                circle
-                @click="copyLink(record.ipnsUrl || getRecordUrl(record))"
-              >
-                <el-icon><DocumentCopy /></el-icon>
-              </el-button>
-            </el-tooltip>
             <el-tooltip :content="$t('common.edit')">
               <el-button size="small" circle type="primary" @click="editRecord(record)">
                 <el-icon><Edit /></el-icon>

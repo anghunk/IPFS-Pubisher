@@ -357,8 +357,6 @@ export function generateTopicListPage(
 						(record) => `
       <a href="${record.ipnsUrl || gateway + record.cid}" target="_blank" class="article-card">
         <h2>${escapeHtml(record.title)}</h2>
-        <div>ipnsUrl: ${record.ipnsUrl}</div>
-        <div>cid: ${gateway}、${record.cid}</div>
         <div class="meta">发布于 ${formatDate(record.createdAt)}</div>
         <p class="preview">${escapeHtml(truncate(record.content, 150))}</p>
       </a>
