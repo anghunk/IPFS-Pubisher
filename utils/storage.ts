@@ -2,14 +2,28 @@
  * 发布列表存储服务
  */
 
+// 文章发布状态
+export type PublishStatus = 'draft' | 'publishing' | 'published' | 'failed';
+
 export interface PublishRecord {
 	id: string;
 	title: string;
 	content: string;
-	cid: string;
-	url: string;
+	// 发布状态
+	status: PublishStatus;
+	// IPFS 发布信息（发布后才有）
+	cid?: string;
+	url?: string;
+	publishedAt?: number;
+	// 时间戳
 	createdAt: number;
 	updatedAt: number;
+	// IPNS 永久链接相关
+	ipnsKeyName?: string;
+	ipnsId?: string;
+	ipnsUrl?: string;
+	// 错误信息
+	errorMessage?: string;
 }
 
 const STORAGE_KEY = 'publishHistory';
@@ -38,13 +52,14 @@ export async function getRecord(id: string): Promise<PublishRecord | null> {
 }
 
 /**
- * 添加记录
+ * 添加记录（本地保存，未发布状态）
  */
 export async function addRecord(data: {
 	title: string;
 	content: string;
-	cid: string;
-	url: string;
+	cid?: string;
+	url?: string;
+	status?: PublishStatus;
 }): Promise<PublishRecord> {
 	const records = await getRecords();
 	const now = Date.now();
@@ -53,10 +68,12 @@ export async function addRecord(data: {
 		id: generateId(),
 		title: data.title,
 		content: data.content,
+		status: data.status || 'draft',
 		cid: data.cid,
 		url: data.url,
 		createdAt: now,
 		updatedAt: now,
+		publishedAt: data.cid ? now : undefined,
 	};
 
 	records.unshift(newRecord); // 新记录放在最前面
@@ -73,8 +90,14 @@ export async function updateRecord(
 	data: {
 		title?: string;
 		content?: string;
+		status?: PublishStatus;
 		cid?: string;
 		url?: string;
+		publishedAt?: number;
+		ipnsKeyName?: string;
+		ipnsId?: string;
+		ipnsUrl?: string;
+		errorMessage?: string;
 	},
 ): Promise<PublishRecord | null> {
 	const records = await getRecords();

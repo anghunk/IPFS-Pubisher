@@ -109,7 +109,7 @@
     "step3Title": "Configure Cross-Origin Access (CORS)",
     "step3Desc": "Browser extensions require IPFS node to allow cross-origin access. Please configure as follows:",
     "configStep1": "Open IPFS Desktop Settings",
-    "configStep2": "Find IPFS CONFIG section and click to edit the config file",
+    "configStep2": "Find Kubo Configuration section and click to edit the config file",
     "configStep3": "Find the \"API\" section and add or modify to the following content:",
     "restartNote": "You need to restart IPFS Desktop after saving the configuration",
     "step4Title": "Verify Connection",

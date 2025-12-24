@@ -11,17 +11,20 @@ import {
 import { generateHtmlPage, generateListPage } from '../utils/template';
 
 // 定义消息类型接口
-interface PublishMessage {
-	action: 'publish';
+interface SaveMessage {
+	action: 'save';
 	title: string;
 	content: string;
+	id?: string; // 编辑时传入
 }
 
-interface RepublishMessage {
-	action: 'republish';
+interface PublishMessage {
+	action: 'publishArticle';
 	id: string;
-	title: string;
-	content: string;
+}
+
+interface PublishAllMessage {
+	action: 'publishAllArticles';
 }
 
 interface CheckNodeMessage {
@@ -34,8 +37,9 @@ interface RecordMessage {
 }
 
 type Message =
+	| SaveMessage
 	| PublishMessage
-	| RepublishMessage
+	| PublishAllMessage
 	| CheckNodeMessage
 	| RecordMessage
 	| { action: string; [key: string]: any };
@@ -46,33 +50,32 @@ export default defineBackground(() => {
 
 const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
 
-// 处理 IPFS 发布请求
+// ============ 保存文章（仅本地） ============
 browserAPI.runtime.onMessage.addListener((request: Message, sender, sendResponse) => {
-	if (request.action === 'publish') {
-		const { title, content } = request as PublishMessage;
+	if (request.action === 'save') {
+		const { title, content, id } = request as SaveMessage;
 
 		(async () => {
 			try {
-				// 生成带样式的 HTML 页面
-				const htmlContent = generateHtmlPage(title, content, Date.now());
-				const filename = `${title.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_')}.html`;
-
-				// 调试日志
-				console.log('[IPFS Publisher] 发布操作 - 生成 HTML');
-				console.log('[IPFS Publisher] HTML 内容长度:', htmlContent.length);
-				console.log('[IPFS Publisher] 是否包含 DOCTYPE:', htmlContent.includes('<!DOCTYPE html>'));
-
-				const result = await uploadToIpfs(htmlContent, filename, 'text/html');
-
-				// 保存到历史记录
-				const record = await addRecord({
-					title,
-					content,
-					cid: result.cid,
-					url: result.url,
-				});
-
-				sendResponse({ success: true, data: { ...result, record } });
+				let record;
+				if (id) {
+					// 更新现有记录
+					record = await updateRecord(id, {
+						title,
+						content,
+						// 如果内容有变化，重置发布状态为 draft（需要重新发布）
+						status: 'draft',
+					});
+				} else {
+					// 新建记录
+					record = await addRecord({
+						title,
+						content,
+						status: 'draft',
+					});
+				}
+				console.log('[IPFS Publisher] 文章已保存:', record?.id);
+				sendResponse({ success: true, data: record });
 			} catch (error: any) {
 				sendResponse({ success: false, error: error.message });
 			}
@@ -82,28 +85,158 @@ browserAPI.runtime.onMessage.addListener((request: Message, sender, sendResponse
 	}
 });
 
-// 处理重新发布（编辑后重新上传）
+// ============ 发布单篇文章到 IPFS + 自动生成 IPNS 永久链接 ============
 browserAPI.runtime.onMessage.addListener((request: Message, sender, sendResponse) => {
-	if (request.action === 'republish') {
-		const { id, title, content } = request as RepublishMessage;
+	if (request.action === 'publishArticle') {
+		const { id } = request as PublishMessage;
 
 		(async () => {
 			try {
-				// 生成带样式的 HTML 页面
-				const htmlContent = generateHtmlPage(title, content, Date.now());
-				const filename = `${title.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_')}.html`;
+				// 获取文章记录
+				const record = await getRecord(id);
+				if (!record) {
+					throw new Error('文章不存在');
+				}
 
+				// 更新状态为发布中
+				await updateRecord(id, { status: 'publishing' });
+
+				// 生成带样式的 HTML 页面
+				const htmlContent = generateHtmlPage(record.title, record.content, record.createdAt);
+				const filename = `${record.title.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_')}.html`;
+
+				console.log('[IPFS Publisher] 发布文章:', record.title);
+
+				// 上传到 IPFS
 				const result = await uploadToIpfs(htmlContent, filename, 'text/html');
+				console.log('[IPFS Publisher] IPFS 上传成功, CID:', result.cid);
+
+				// 自动创建 IPNS 永久链接
+				const keyName = `article-${record.id.substring(0, 8)}`;
+				let ipnsUrl = '';
+				let ipnsId = '';
+				
+				try {
+					// 检查密钥是否存在
+					const existingKeys = await listKeys();
+					const keyExists = existingKeys.some(k => k.Name === keyName);
+					
+					if (!keyExists) {
+						await generateKey(keyName);
+						console.log('[IPFS Publisher] 已创建文章密钥:', keyName);
+					}
+					
+					// 发布到 IPNS
+					const ipnsResult = await publishToIpns(result.cid, keyName);
+					ipnsId = ipnsResult.Name;
+					ipnsUrl = await getIpnsUrl(ipnsResult.Name);
+					console.log('[IPFS Publisher] IPNS 发布成功:', ipnsUrl);
+				} catch (ipnsError: any) {
+					// IPNS 失败不影响 IPFS 发布结果
+					console.warn('[IPFS Publisher] IPNS 发布失败，但 IPFS 已成功:', ipnsError.message);
+				}
 
 				// 更新记录
-				const record = await updateRecord(id, {
-					title,
-					content,
+				const updatedRecord = await updateRecord(id, {
+					status: 'published',
 					cid: result.cid,
 					url: result.url,
+					publishedAt: Date.now(),
+					ipnsKeyName: keyName,
+					ipnsId: ipnsId || undefined,
+					ipnsUrl: ipnsUrl || undefined,
+					errorMessage: undefined,
 				});
 
-				sendResponse({ success: true, data: { ...result, record } });
+				console.log('[IPFS Publisher] 文章发布完成');
+				sendResponse({ success: true, data: { ...result, ipnsUrl, record: updatedRecord } });
+			} catch (error: any) {
+				// 更新状态为失败
+				await updateRecord(id, {
+					status: 'failed',
+					errorMessage: error.message,
+				});
+				console.error('[IPFS Publisher] 文章发布失败:', error);
+				sendResponse({ success: false, error: error.message });
+			}
+		})();
+
+		return true;
+	}
+});
+
+// ============ 批量发布所有草稿文章 + 自动生成 IPNS ============
+browserAPI.runtime.onMessage.addListener((request: Message, sender, sendResponse) => {
+	if (request.action === 'publishAllArticles') {
+		(async () => {
+			try {
+				const records = await getRecords();
+				// 筛选出需要发布的文章（草稿或失败状态）
+				const toPublish = records.filter(r => r.status === 'draft' || r.status === 'failed');
+				
+				if (toPublish.length === 0) {
+					sendResponse({ success: true, data: { published: 0, failed: 0, results: [] } });
+					return;
+				}
+
+				const results: { id: string; success: boolean; cid?: string; ipnsUrl?: string; error?: string }[] = [];
+				let published = 0;
+				let failed = 0;
+
+				for (const record of toPublish) {
+					try {
+						// 更新状态为发布中
+						await updateRecord(record.id, { status: 'publishing' });
+
+						// 生成 HTML 并上传
+						const htmlContent = generateHtmlPage(record.title, record.content, record.createdAt);
+						const filename = `${record.title.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_')}.html`;
+						const result = await uploadToIpfs(htmlContent, filename, 'text/html');
+
+						// 自动创建 IPNS 永久链接
+						const keyName = `article-${record.id.substring(0, 8)}`;
+						let ipnsUrl = '';
+						let ipnsId = '';
+						
+						try {
+							const existingKeys = await listKeys();
+							if (!existingKeys.some(k => k.Name === keyName)) {
+								await generateKey(keyName);
+							}
+							const ipnsResult = await publishToIpns(result.cid, keyName);
+							ipnsId = ipnsResult.Name;
+							ipnsUrl = await getIpnsUrl(ipnsResult.Name);
+						} catch (ipnsError: any) {
+							console.warn('[IPFS Publisher] IPNS 发布失败:', ipnsError.message);
+						}
+
+						// 更新记录
+						await updateRecord(record.id, {
+							status: 'published',
+							cid: result.cid,
+							url: result.url,
+							publishedAt: Date.now(),
+							ipnsKeyName: keyName,
+							ipnsId: ipnsId || undefined,
+							ipnsUrl: ipnsUrl || undefined,
+							errorMessage: undefined,
+						});
+
+						results.push({ id: record.id, success: true, cid: result.cid, ipnsUrl });
+						published++;
+						console.log('[IPFS Publisher] 批量发布 - 成功:', record.title);
+					} catch (error: any) {
+						await updateRecord(record.id, {
+							status: 'failed',
+							errorMessage: error.message,
+						});
+						results.push({ id: record.id, success: false, error: error.message });
+						failed++;
+						console.error('[IPFS Publisher] 批量发布 - 失败:', record.title, error);
+					}
+				}
+
+				sendResponse({ success: true, data: { published, failed, results } });
 			} catch (error: any) {
 				sendResponse({ success: false, error: error.message });
 			}
@@ -179,7 +312,7 @@ browserAPI.runtime.onMessage.addListener((request: Message, sender, sendResponse
 // 进入 options 页面
 browserAPI.runtime.onMessage.addListener((request: Message, sender, sendResponse) => {
 	if (request.action === 'open_options_page') {
-		const extensionURL = browserAPI.runtime.getURL('options.html');
+		const extensionURL = browserAPI.runtime.getURL('/options.html');
 		browserAPI.tabs.create({ url: extensionURL });
 	}
 });
@@ -282,12 +415,22 @@ browserAPI.runtime.onMessage.addListener((request: any, sender, sendResponse) =>
 				const { keyName } = request;
 				const settings = await getSettings();
 
-				// 获取所有文章记录
-				const records = await getRecords();
+				// 获取所有已发布的文章记录
+				const allRecords = await getRecords();
+				const publishedRecords = allRecords.filter(r => r.status === 'published' && r.cid);
+
+				// 转换为 ListPageRecord 格式
+				const listRecords = publishedRecords.map(r => ({
+					id: r.id,
+					title: r.title,
+					content: r.content,
+					cid: r.cid!,
+					createdAt: r.createdAt,
+				}));
 
 				// 生成列表页 HTML
 				const gateway = settings.gateway || 'https://ipfs.io/ipfs/';
-				const listHtml = generateListPage(records, gateway);
+				const listHtml = generateListPage(listRecords, gateway);
 
 				// 上传到 IPFS
 				const uploadResult = await uploadToIpfs(listHtml, 'article-list.html', 'text/html');
@@ -323,3 +466,5 @@ browserAPI.runtime.onMessage.addListener((request: any, sender, sendResponse) =>
 		return true;
 	}
 });
+
+

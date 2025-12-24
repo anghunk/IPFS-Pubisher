@@ -11,7 +11,7 @@
           <el-input
             v-model="form.title"
             :placeholder="$t('editor.titlePlaceholder')"
-            :disabled="publishing"
+            :disabled="saving"
             size="large"
           />
         </el-form-item>
@@ -22,76 +22,53 @@
             type="textarea"
             :rows="16"
             :placeholder="$t('editor.contentPlaceholder')"
-            :disabled="publishing"
+            :disabled="saving"
           />
         </el-form-item>
       </el-form>
 
       <div class="form-actions">
-        <el-button v-if="isEditing" @click="cancelEdit" size="large">{{
-          $t("editor.cancelEdit")
-        }}</el-button>
+        <el-button @click="cancelEdit" size="large">
+          {{ $t("common.cancel") }}
+        </el-button>
         <el-button
           type="primary"
-          :loading="publishing"
-          :disabled="!canPublish"
-          @click="handlePublish"
+          :loading="saving"
+          :disabled="!canSave"
+          @click="handleSave"
           size="large"
-          class="publish-btn"
+          class="save-btn"
         >
-          {{
-            publishing
-              ? $t("editor.publishing")
-              : isEditing
-              ? $t("editor.republish")
-              : $t("editor.publish")
-          }}
+          {{ saving ? "保存中..." : "保存文章" }}
         </el-button>
       </div>
     </div>
 
-    <!-- 发布结果 -->
-    <div v-if="publishResult" class="publish-result">
-      <el-alert v-if="publishResult.success" type="success" :closable="false" show-icon>
-        <template #title>{{ $t("editor.publishSuccess") }}</template>
+    <!-- 保存成功提示 -->
+    <div v-if="saveSuccess" class="save-result">
+      <el-alert type="success" :closable="false" show-icon>
+        <template #title>文章已保存</template>
         <template #default>
           <div class="result-content">
-            <p>
-              <strong>{{ $t("editor.cid") }}:</strong> {{ publishResult.data.cid }}
-            </p>
-            <div class="result-actions">
-              <el-link :href="publishResult.data.url" target="_blank" type="primary">
-                <el-icon><Link /></el-icon> {{ $t("editor.visitLink") }}
-              </el-link>
-              <el-button size="small" @click="copyLink(publishResult.data.url)">
-                <el-icon><DocumentCopy /></el-icon>
-                {{ copied ? $t("common.copied") : $t("common.copy") }}
-              </el-button>
-            </div>
+            <p>文章已保存到本地，您可以在文章列表中查看并发布到 IPFS。</p>
+            <el-button type="primary" size="small" @click="goToList">
+              查看文章列表
+            </el-button>
           </div>
         </template>
-      </el-alert>
-      <el-alert v-else type="error" :closable="false" show-icon>
-        <template #title>{{ $t("editor.publishFailed") }}</template>
-        <template #default>{{ publishResult.error }}</template>
       </el-alert>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, inject, watch } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { Upload, Link, DocumentCopy } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 import { useI18n } from "vue-i18n";
 import type { PublishRecord } from "../../../utils/storage";
 
 const { t } = useI18n();
-
-const props = defineProps<{
-  nodeStatus: "connected" | "disconnected";
-}>();
 
 const emit = defineEmits(["update-count"]);
 
@@ -99,9 +76,8 @@ const route = useRoute();
 const router = useRouter();
 
 const editingRecord = ref<PublishRecord | null>(null);
-const publishing = ref(false);
-const publishResult = ref<any>(null);
-const copied = ref(false);
+const saving = ref(false);
+const saveSuccess = ref(false);
 
 const form = ref({
   title: "",
@@ -110,13 +86,8 @@ const form = ref({
 
 const isEditing = computed(() => !!editingRecord.value);
 
-const canPublish = computed(() => {
-  return (
-    form.value.title.trim() &&
-    form.value.content.trim() &&
-    !publishing.value &&
-    props.nodeStatus === "connected"
-  );
+const canSave = computed(() => {
+  return form.value.title.trim() && form.value.content.trim() && !saving.value;
 });
 
 onMounted(async () => {
@@ -156,20 +127,23 @@ function cancelEdit() {
   editingRecord.value = null;
   form.value.title = "";
   form.value.content = "";
-  publishResult.value = null;
+  saveSuccess.value = false;
   router.push("/list");
 }
 
-async function handlePublish() {
-  if (!canPublish.value) return;
+function goToList() {
+  router.push("/list");
+}
 
-  publishing.value = true;
-  publishResult.value = null;
+async function handleSave() {
+  if (!canSave.value) return;
+
+  saving.value = true;
+  saveSuccess.value = false;
 
   try {
-    const action = editingRecord.value ? "republish" : "publish";
     const payload: any = {
-      action,
+      action: "save",
       title: form.value.title.trim(),
       content: form.value.content.trim(),
     };
@@ -179,12 +153,17 @@ async function handlePublish() {
     }
 
     const response = await chrome.runtime.sendMessage(payload);
-    publishResult.value = response;
 
     if (response.success) {
-      form.value.title = "";
-      form.value.content = "";
-      editingRecord.value = null;
+      saveSuccess.value = true;
+      
+      // 如果是新建，清空表单
+      if (!editingRecord.value) {
+        form.value.title = "";
+        form.value.content = "";
+      }
+      
+      editingRecord.value = response.data;
 
       // 更新记录数量
       const recordsResponse = await chrome.runtime.sendMessage({ action: "getRecords" });
@@ -192,25 +171,15 @@ async function handlePublish() {
         emit("update-count", recordsResponse.data.length);
       }
 
-      ElMessage.success(t("editor.publishSuccess"));
-
-      // 跳转到列表页
-      router.push("/list");
+      ElMessage.success("文章已保存");
+    } else {
+      throw new Error(response.error);
     }
   } catch (error: any) {
-    publishResult.value = { success: false, error: error.message };
+    ElMessage.error("保存失败: " + error.message);
   } finally {
-    publishing.value = false;
+    saving.value = false;
   }
-}
-
-async function copyLink(url: string) {
-  await navigator.clipboard.writeText(url);
-  copied.value = true;
-  ElMessage.success(t("editor.linkCopied"));
-  setTimeout(() => {
-    copied.value = false;
-  }, 2000);
 }
 </script>
 
@@ -255,8 +224,8 @@ async function copyLink(url: string) {
   padding-top: 20px;
   border-top: 1px solid #e5e7eb;
 
-  .publish-btn {
-    min-width: 160px;
+  .save-btn {
+    min-width: 140px;
     background: @primary;
     border-color: @primary;
     color: @bg-dark;
@@ -269,7 +238,7 @@ async function copyLink(url: string) {
   }
 }
 
-.publish-result {
+.save-result {
   margin-top: 20px;
 
   .result-content {
@@ -279,13 +248,6 @@ async function copyLink(url: string) {
       margin: 0 0 12px 0;
       font-size: 13px;
       color: #374151;
-      word-break: break-all;
-    }
-
-    .result-actions {
-      display: flex;
-      align-items: center;
-      gap: 12px;
     }
   }
 }
@@ -324,15 +286,9 @@ async function copyLink(url: string) {
       width: 100%;
     }
 
-    .publish-btn {
+    .save-btn {
       min-width: auto;
     }
-  }
-
-  .publish-result .result-content .result-actions {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
   }
 }
 

@@ -5,6 +5,9 @@
 
 import { marked } from 'marked';
 
+// 扩展默认图标地址（使用 IPFS 存储的图标）
+const DEFAULT_FAVICON = 'https://ipfs.io/ipfs/QmNqSJz6xW5vfJjX1fHPhmF8pLLLt1JoCQ8WAbNdNtV9mL';
+
 // 配置 marked 为同步模式
 marked.setOptions({
 	async: false,
@@ -288,6 +291,7 @@ export function generateHtmlPage(title: string, content: string, createdAt?: num
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${escapeHtml(title)}</title>
+  <link rel="icon" type="image/png" href="https://github.com/anghunk/IPFS-Publisher/blob/main/public/icon/16.png?raw=true">
   <style>${articleStyles}</style>
 </head>
 <body>
@@ -311,7 +315,7 @@ export function generateHtmlPage(title: string, content: string, createdAt?: num
         ${htmlContent}
       </div>
       <footer class="footer">
-        <p>Powered by <a href="https://ipfs.io" target="_blank">IPFS</a> · Published via IPFS Publisher</p>
+        <p>Powered by <a href="https://ipfs.io" target="_blank">IPFS</a> · Published via <a href="https://github.com/anghunk/IPFS-Publisher" target="_blank">IPFS Publisher</a></p>
       </footer>
     </article>
   </div>
@@ -525,6 +529,7 @@ export function generateListPage(records: ListPageRecord[], gateway: string): st
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>文章列表 - IPFS Publisher</title>
+  <link rel="icon" type="image/png" href="https://github.com/anghunk/IPFS-Publisher/blob/main/public/icon/16.png?raw=true">
   <style>${listPageStyles}</style>
 </head>
 <body>
@@ -538,7 +543,7 @@ export function generateListPage(records: ListPageRecord[], gateway: string): st
       ${articleCards}
     </div>
     <footer class="footer">
-      <p>Powered by <a href="https://ipfs.io" target="_blank">IPFS</a> · Published via IPFS Publisher</p>
+      <p>Powered by <a href="https://ipfs.io" target="_blank">IPFS</a> · Published via <a href="https://github.com/anghunk/IPFS-Publisher" target="_blank">IPFS Publisher</a></p>
     </footer>
   </div>
 </body>

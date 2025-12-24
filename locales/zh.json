@@ -109,7 +109,7 @@
     "step3Title": "配置跨域访问 (CORS)",
     "step3Desc": "浏览器扩展需要 IPFS 节点允许跨域访问。请按以下步骤配置：",
     "configStep1": "打开 IPFS Desktop 的设置 (Settings)",
-    "configStep2": "找到 IPFS CONFIG 部分，点击编辑配置文件",
+    "configStep2": "找到 Kubo 配置 部分，点击编辑配置文件",
     "configStep3": "找到 \"API\" 部分，添加或修改为以下内容：",
     "restartNote": "保存配置后需要重启 IPFS Desktop",
     "step4Title": "验证连接",

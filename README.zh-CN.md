@@ -6,6 +6,8 @@
 
 [Chrome Web Store](https://chromewebstore.google.com/detail/boadlmdjnofefcpehbdjjmbggghejiga)
 
+[Github](https://github.com/anghunk/IPFS-Publisher)
+
 ![](./public/image.zh.jpg)
 
 ## 功能

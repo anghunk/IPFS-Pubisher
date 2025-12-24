@@ -86,7 +86,7 @@
         <div class="about-info">
           <div class="about-item">
             <span class="about-label">{{ $t("settings.version") }}</span>
-            <span class="about-value">v1.0.0</span>
+            <span class="about-value">v{{ appVersion }}</span>
           </div>
 
           <div class="about-links">
@@ -126,57 +126,76 @@
         </div>
       </div>
 
-      <!-- <div class="setting-section">
+      <div class="setting-section" id="ipns-section">
         <h3>IPNS 文章列表</h3>
-        <p class="setting-desc">生成固定的文章列表链接，更新文章后链接不变</p>
-        
-        <el-form label-position="top">
-          <el-form-item label="IPNS 密钥">
-            <div class="key-selector">
-              <el-select 
-                v-model="selectedKey" 
-                placeholder="选择密钥"
-                size="large"
-                style="flex: 1;"
-              >
-                <el-option 
-                  v-for="key in ipnsKeys" 
-                  :key="key.Name" 
-                  :label="key.Name" 
-                  :value="key.Name"
-                />
-              </el-select>
-              <el-button @click="loadKeys" :loading="loadingKeys">刷新</el-button>
-              <el-button type="primary" @click="showCreateKeyDialog = true">新建</el-button>
-            </div>
-            <div class="input-tip">
-              选择或创建一个密钥用于发布文章列表
-            </div>
-          </el-form-item>
+        <p class="setting-desc">一键生成固定的文章列表链接，更新文章后链接不变</p>
 
+        <el-form label-position="top">
+          <!-- IPNS 链接展示 -->
           <el-form-item v-if="settings.ipnsUrl">
             <div class="ipns-url-box">
               <span class="label">IPNS 链接：</span>
-              <a :href="settings.ipnsUrl" target="_blank" class="ipns-link">{{ settings.ipnsUrl }}</a>
+              <a :href="settings.ipnsUrl" target="_blank" class="ipns-link">{{
+                settings.ipnsUrl
+              }}</a>
               <el-button size="small" @click="copyIpnsUrl">复制</el-button>
             </div>
           </el-form-item>
 
-          <el-button 
-            type="warning" 
-            size="large" 
-            @click="publishListToIpns" 
+          <!-- 一键发布按钮 -->
+          <el-button
+            type="warning"
+            size="large"
+            @click="oneClickPublish"
             :loading="publishing"
-            :disabled="!selectedKey"
-            style="width: 100%;"
+            style="width: 100%"
           >
-            {{ settings.ipnsUrl ? '更新文章列表页' : '发布文章列表页' }}
+            <span v-if="publishing">{{ publishingStatus }}</span>
+            <span v-else>{{
+              settings.ipnsUrl ? "一键更新文章列表" : "一键发布文章列表"
+            }}</span>
           </el-button>
-          <div class="input-tip" style="text-align: center; margin-top: 12px;">
-            发布后获得固定的 IPNS 链接，文章更新后只需点击「更新」即可
+          <div class="input-tip" style="text-align: center; margin-top: 12px">
+            自动创建密钥并发布，获得永久固定链接
           </div>
+
+          <!-- 高级设置折叠面板 -->
+          <div class="advanced-toggle" @click="toggleAdvanced">
+            <span class="toggle-text">高级设置</span>
+            <el-icon class="toggle-icon" :class="{ expanded: advancedExpanded }">
+              <ArrowDown />
+            </el-icon>
+          </div>
+          
+          <transition name="slide-fade">
+            <div v-if="advancedExpanded" class="advanced-settings">
+              <div class="advanced-content">
+                <div class="key-row">
+                  <span class="key-label">当前密钥</span>
+                  <el-tag size="small" type="info">{{ settings.ipnsKeyName || DEFAULT_KEY_NAME }}</el-tag>
+                </div>
+                <div class="key-selector">
+                  <el-select
+                    v-model="selectedKey"
+                    placeholder="选择其他密钥"
+                    size="small"
+                    style="flex: 1"
+                  >
+                    <el-option
+                      v-for="key in ipnsKeys"
+                      :key="key.Name"
+                      :label="key.Name"
+                      :value="key.Name"
+                    />
+                  </el-select>
+                  <el-button size="small" @click="loadKeys" :loading="loadingKeys" :icon="Refresh" />
+                  <el-button size="small" type="primary" @click="showCreateKeyDialog = true" :icon="Plus" />
+                </div>
+              </div>
+            </div>
+          </transition>
         </el-form>
-      </div> -->
+      </div>
 
       <div class="form-actions">
         <el-button @click="resetSettings" size="large">{{
@@ -207,12 +226,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, nextTick } from "vue";
+import { useRoute } from "vue-router";
 import { ElMessage } from "element-plus";
+import { ArrowDown, Refresh, Plus } from "@element-plus/icons-vue";
 import { useI18n } from "vue-i18n";
 import { getBrowserLanguage } from "../../../utils/i18n";
 
 const { t, locale } = useI18n();
+const route = useRoute();
 
 interface Settings {
   gateway: string;
@@ -236,12 +258,22 @@ const testing = ref(false);
 const saving = ref(false);
 const loadingKeys = ref(false);
 const publishing = ref(false);
+const publishingStatus = ref("");
 const creatingKey = ref(false);
 const showCreateKeyDialog = ref(false);
 const newKeyName = ref("");
 const ipnsKeys = ref<IpnsKey[]>([]);
 const selectedKey = ref("");
 const language = ref("auto");
+const advancedExpanded = ref(false);
+const appVersion = ref("");
+
+// 默认密钥名
+const DEFAULT_KEY_NAME = "ipfs-publisher";
+
+function toggleAdvanced() {
+  advancedExpanded.value = !advancedExpanded.value;
+}
 
 const gatewayPresets = [
   { name: "IPFS.io", url: "https://ipfs.io/ipfs/" },
@@ -252,9 +284,24 @@ const gatewayPresets = [
 ];
 
 onMounted(async () => {
+  // 获取扩展版本号
+  appVersion.value = chrome.runtime.getManifest().version;
+
   await loadSettings();
   await loadLanguage();
   await loadKeys();
+  
+  // 检查是否需要滚动到 IPNS 区域
+  if (route.query.section === 'ipns') {
+    await nextTick();
+    const ipnsSection = document.getElementById('ipns-section');
+    if (ipnsSection) {
+      ipnsSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // 添加高亮效果
+      ipnsSection.classList.add('highlight');
+      setTimeout(() => ipnsSection.classList.remove('highlight'), 2000);
+    }
+  }
 });
 
 async function loadSettings() {
@@ -334,6 +381,71 @@ async function createKey() {
   }
 }
 
+/**
+ * 一键发布：自动检测/创建密钥并发布
+ */
+async function oneClickPublish() {
+  publishing.value = true;
+
+  try {
+    // 步骤1：确定使用的密钥
+    let keyName = selectedKey.value || settings.value.ipnsKeyName || DEFAULT_KEY_NAME;
+
+    // 步骤2：检查密钥是否存在
+    publishingStatus.value = "检查密钥...";
+    const keysResponse = await chrome.runtime.sendMessage({ action: "listKeys" });
+
+    if (!keysResponse.success) {
+      throw new Error("无法获取密钥列表，请确保 IPFS 节点已启动");
+    }
+
+    const existingKeys = keysResponse.data as IpnsKey[];
+    const keyExists = existingKeys.some((k) => k.Name === keyName);
+
+    // 步骤3：如果密钥不存在则自动创建
+    if (!keyExists) {
+      publishingStatus.value = "创建密钥...";
+      const createResponse = await chrome.runtime.sendMessage({
+        action: "generateKey",
+        keyName: keyName,
+      });
+
+      if (!createResponse.success) {
+        throw new Error("创建密钥失败: " + createResponse.error);
+      }
+    }
+
+    // 步骤4：发布到 IPNS
+    publishingStatus.value = "发布中...";
+    const response = await chrome.runtime.sendMessage({
+      action: "publishListToIpns",
+      keyName: keyName,
+    });
+
+    if (response.success) {
+      settings.value.ipnsUrl = response.data.ipnsUrl;
+      settings.value.ipnsId = response.data.ipnsId;
+      settings.value.ipnsKeyName = keyName;
+      selectedKey.value = keyName;
+
+      // 刷新密钥列表
+      await loadKeys();
+
+      ElMessage.success("发布成功！已生成永久链接");
+    } else {
+      throw new Error(response.error);
+    }
+  } catch (error: any) {
+    ElMessage.error("发布失败: " + error.message);
+  } finally {
+    publishing.value = false;
+    publishingStatus.value = "";
+  }
+}
+
+/**
+ * 使用选定的密钥发布（高级模式）
+ */
 async function publishListToIpns() {
   if (!selectedKey.value) {
     ElMessage.warning("请先选择或创建 IPNS 密钥");
@@ -469,6 +581,13 @@ async function resetSettings() {
   margin-bottom: 32px;
   padding-bottom: 24px;
   border-bottom: 1px solid #e5e7eb;
+  transition: box-shadow 0.3s, background-color 0.3s;
+  border-radius: 8px;
+  
+  &.highlight {
+    box-shadow: 0 0 0 3px rgba(245, 209, 4, 0.4);
+    background-color: #fffef0;
+  }
 
   &:last-of-type {
     margin-bottom: 0;
@@ -513,7 +632,66 @@ async function resetSettings() {
 
 .key-selector {
   display: flex;
-  gap: 8px;
+  gap: 6px;
+}
+
+.advanced-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 16px;
+  padding: 8px;
+  cursor: pointer;
+  color: #9ca3af;
+  font-size: 12px;
+  transition: color 0.2s;
+  
+  &:hover {
+    color: #6b7280;
+  }
+  
+  .toggle-icon {
+    transition: transform 0.3s;
+    
+    &.expanded {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+.advanced-settings {
+  margin-top: 12px;
+  
+  .advanced-content {
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+  }
+  
+  .key-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    
+    .key-label {
+      font-size: 13px;
+      color: #6b7280;
+    }
+  }
+}
+
+.slide-fade-enter-active,
+.slide-fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 
 .ipns-url-box {
@@ -566,7 +744,7 @@ async function resetSettings() {
       }
 
       .about-value {
-        color: @bg-dark;
+        color: #6b7280;
         font-weight: 500;
         font-size: 14px;
       }
