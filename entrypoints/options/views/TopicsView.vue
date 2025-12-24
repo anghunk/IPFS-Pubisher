@@ -39,7 +39,9 @@
               <div class="topic-name">{{ topic.name }}</div>
               <div class="topic-meta">
                 <span class="article-count">{{ topic.articleIds.length }} 篇文章</span>
-                <el-tag v-if="topic.ipnsUrl" size="small" type="warning" effect="light">已发布</el-tag>
+                <el-tag v-if="topic.ipnsUrl" size="small" type="warning" effect="light"
+                  >已发布</el-tag
+                >
               </div>
             </div>
             <div class="topic-actions" @click.stop>
@@ -71,15 +73,15 @@
           <div class="panel-header">
             <div class="topic-info-header">
               <h3>{{ selectedTopic.name }}</h3>
-              <p v-if="selectedTopic.description" class="topic-desc">{{ selectedTopic.description }}</p>
-              <p v-if="selectedTopic.author" class="topic-author">作者：{{ selectedTopic.author }}</p>
+              <p v-if="selectedTopic.description" class="topic-desc">
+                {{ selectedTopic.description }}
+              </p>
+              <p v-if="selectedTopic.author" class="topic-author">
+                作者：{{ selectedTopic.author }}
+              </p>
             </div>
             <div class="header-actions">
-              <el-button 
-                v-if="!isManaging" 
-                type="primary" 
-                @click="enterManageMode"
-              >
+              <el-button v-if="!isManaging" type="primary" @click="enterManageMode">
                 <el-icon><Setting /></el-icon>
                 管理文章
               </el-button>
@@ -90,13 +92,15 @@
             </div>
           </div>
 
-          <!-- IPNS 发布状态 -->
-          <div v-if="selectedTopic.ipnsUrl" class="ipns-status-bar">
+          <!-- IPNS 发布状态（管理模式下隐藏） -->
+          <div v-if="selectedTopic.ipnsUrl && !isManaging" class="ipns-status-bar">
             <el-tag size="small" type="warning" effect="light">永久链接</el-tag>
             <a :href="selectedTopic.ipnsUrl" target="_blank" class="ipns-link">
               {{ selectedTopic.ipnsUrl }}
             </a>
-            <el-button size="small" text @click="copyLink(selectedTopic.ipnsUrl)">复制</el-button>
+            <el-button size="small" text @click="copyLink(selectedTopic.ipnsUrl)"
+              >复制</el-button
+            >
             <el-button
               type="warning"
               size="small"
@@ -106,7 +110,7 @@
               更新发布
             </el-button>
           </div>
-          <div v-else class="publish-bar">
+          <div v-else-if="!isManaging" class="publish-bar">
             <span class="publish-hint">该话题尚未发布到 IPNS</span>
             <el-button
               type="warning"
@@ -123,14 +127,24 @@
           <!-- 文章列表区域 -->
           <div class="articles-section">
             <div class="section-header">
-              <span>{{ isManaging ? '选择要添加的文章' : '已添加的文章' }}</span>
-              <span class="count-badge">{{ isManaging ? `已选 ${tempSelectedIds.length} 篇` : `${getTopicArticles(selectedTopic).length} 篇` }}</span>
+              <span>{{ isManaging ? "选择要添加的文章" : "已添加的文章" }}</span>
+              <span class="count-badge">{{
+                isManaging
+                  ? `已选 ${tempSelectedIds.length} 篇`
+                  : `${getTopicArticles(selectedTopic).length} 篇`
+              }}</span>
             </div>
 
             <!-- 非管理模式：显示已添加的文章 -->
             <div v-if="!isManaging" class="article-list">
-              <div v-if="getTopicArticles(selectedTopic).length === 0" class="empty-articles">
-                <el-empty description="暂无文章，点击右上角「管理文章」添加" :image-size="80" />
+              <div
+                v-if="getTopicArticles(selectedTopic).length === 0"
+                class="empty-articles"
+              >
+                <el-empty
+                  description="暂无文章，点击右上角「管理文章」添加"
+                  :image-size="80"
+                />
               </div>
               <div
                 v-for="article in getTopicArticles(selectedTopic)"
@@ -147,20 +161,24 @@
                 <!-- 链接操作区 -->
                 <div class="article-links" v-if="article.status === 'published'">
                   <!-- 永久链接 -->
-                  <el-tooltip v-if="article.ipnsUrl" content="永久链接" placement="top">
-                    <a :href="article.ipnsUrl" target="_blank" class="link-btn permanent">
-                      <el-icon><Link /></el-icon>
-                      <span>永久链接</span>
-                    </a>
-                  </el-tooltip>
-               
-                  <!-- CID 链接 -->
-                  <el-tooltip v-if="article.cid" content="CID 链接" placement="top">
-                    <a :href="article.url" target="_blank" class="link-btn cid">
-                      <span class="cid-text">{{ truncateCid(article.cid) }}</span>
-                    </a>
-                  </el-tooltip>
-                 
+
+                  <a
+                    v-if="article.ipnsUrl"
+                    :href="article.ipnsUrl"
+                    target="_blank"
+                    class="link-btn permanent"
+                  >
+                    <el-icon><Link /></el-icon>
+                    <span>永久链接</span>
+                  </a>
+                  <a
+                    v-if="article.cid"
+                    :href="article.url"
+                    target="_blank"
+                    class="link-btn cid"
+                  >
+                    <span class="cid-text">CID:{{ truncateCid(article.cid) }}</span>
+                  </a>
                 </div>
                 <span v-else class="draft-label">草稿</span>
               </div>
@@ -169,7 +187,10 @@
             <!-- 管理模式：显示所有文章供选择 -->
             <div v-else class="article-list manage-mode">
               <div v-if="allArticles.length === 0" class="empty-articles">
-                <el-empty description="还没有发布过文章，请先去发布文章" :image-size="80" />
+                <el-empty
+                  description="还没有发布过文章，请先去发布文章"
+                  :image-size="80"
+                />
               </div>
               <div
                 v-for="article in allArticles"
@@ -178,8 +199,8 @@
                 :class="{ selected: tempSelectedIds.includes(article.id) }"
                 @click="toggleTempSelect(article.id)"
               >
-                <el-checkbox 
-                  :model-value="tempSelectedIds.includes(article.id)" 
+                <el-checkbox
+                  :model-value="tempSelectedIds.includes(article.id)"
                   @click.stop
                   @change="toggleTempSelect(article.id)"
                 />
@@ -236,7 +257,15 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
-import { Plus, Edit, Delete, Upload, Setting, Link, DocumentCopy } from "@element-plus/icons-vue";
+import {
+  Plus,
+  Edit,
+  Delete,
+  Upload,
+  Setting,
+  Link,
+  DocumentCopy,
+} from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 import { useI18n } from "vue-i18n";
 import type { TopicList } from "../../../utils/storage";
@@ -278,7 +307,7 @@ async function loadTopics() {
       topics.value = response.data;
       // 更新选中的话题数据
       if (selectedTopic.value) {
-        const updated = topics.value.find(t => t.id === selectedTopic.value!.id);
+        const updated = topics.value.find((t) => t.id === selectedTopic.value!.id);
         if (updated) {
           selectedTopic.value = updated;
         }
@@ -309,7 +338,7 @@ function selectTopic(topic: TopicList) {
 }
 
 function getTopicArticles(topic: TopicList): PublishRecord[] {
-  return allArticles.value.filter(a => topic.articleIds.includes(a.id));
+  return allArticles.value.filter((a) => topic.articleIds.includes(a.id));
 }
 
 function editTopic(topic: TopicList) {
@@ -356,7 +385,7 @@ async function handleSaveTopic() {
         ElMessage.success("话题已创建");
         // 选中新创建的话题
         await loadTopics();
-        const newTopic = topics.value.find(t => t.name === topicForm.value.name);
+        const newTopic = topics.value.find((t) => t.name === topicForm.value.name);
         if (newTopic) {
           selectedTopic.value = newTopic;
         }
@@ -415,8 +444,8 @@ async function saveManage() {
   try {
     // 计算需要添加和移除的文章
     const currentIds = selectedTopic.value.articleIds;
-    const toAdd = tempSelectedIds.value.filter(id => !currentIds.includes(id));
-    const toRemove = currentIds.filter(id => !tempSelectedIds.value.includes(id));
+    const toAdd = tempSelectedIds.value.filter((id) => !currentIds.includes(id));
+    const toRemove = currentIds.filter((id) => !tempSelectedIds.value.includes(id));
 
     // 执行添加操作
     for (const articleId of toAdd) {
@@ -515,7 +544,7 @@ function formatDate(timestamp: number): string {
 
 function truncateCid(cid: string): string {
   if (cid.length <= 16) return cid;
-  return cid.substring(0, 8) + '...' + cid.substring(cid.length - 6);
+  return cid.substring(0, 8) + "..." + cid.substring(cid.length - 6);
 }
 </script>
 
@@ -833,7 +862,6 @@ function truncateCid(cid: string): string {
 
       .article-links {
         display: flex;
-        align-items: center;
         gap: 4px;
         flex-shrink: 0;
 
@@ -867,7 +895,7 @@ function truncateCid(cid: string): string {
             }
 
             .cid-text {
-              font-family: 'Monaco', 'Menlo', monospace;
+              font-family: "Monaco", "Menlo", monospace;
               font-size: 11px;
             }
           }

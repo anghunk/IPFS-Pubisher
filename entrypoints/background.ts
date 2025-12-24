@@ -15,7 +15,7 @@ import {
 	addArticleToTopic,
 	removeArticleFromTopic,
 } from '../utils/storage';
-import { generateHtmlPage, generateListPage, generateTopicListPage } from '../utils/template';
+import { generateHtmlPage, generateTopicListPage } from '../utils/template';
 
 // 定义消息类型接口
 interface SaveMessage {
@@ -82,6 +82,24 @@ browserAPI.runtime.onMessage.addListener((request: Message, sender, sendResponse
 					});
 				}
 				console.log('[IPFS Publisher] 文章已保存:', record?.id);
+				sendResponse({ success: true, data: record });
+			} catch (error: any) {
+				sendResponse({ success: false, error: error.message });
+			}
+		})();
+
+		return true;
+	}
+});
+
+// ============ 更新文章状态 ============
+browserAPI.runtime.onMessage.addListener((request: any, sender, sendResponse) => {
+	if (request.action === 'updateRecordStatus') {
+		const { id, status } = request;
+
+		(async () => {
+			try {
+				const record = await updateRecord(id, { status });
 				sendResponse({ success: true, data: record });
 			} catch (error: any) {
 				sendResponse({ success: false, error: error.message });
@@ -417,66 +435,6 @@ browserAPI.runtime.onMessage.addListener((request: any, sender, sendResponse) =>
 	}
 });
 
-// 发布文章列表页到 IPNS
-browserAPI.runtime.onMessage.addListener((request: any, sender, sendResponse) => {
-	if (request.action === 'publishListToIpns') {
-		(async () => {
-			try {
-				const { keyName } = request;
-				const settings = await getSettings();
-
-				// 获取所有已发布的文章记录
-				const allRecords = await getRecords();
-				const publishedRecords = allRecords.filter(r => r.status === 'published' && r.cid);
-
-				// 转换为 ListPageRecord 格式
-				const listRecords = publishedRecords.map(r => ({
-					id: r.id,
-					title: r.title,
-					content: r.content,
-					cid: r.cid!,
-					createdAt: r.createdAt,
-				}));
-
-				// 生成列表页 HTML
-				const gateway = settings.gateway || 'https://ipfs.io/ipfs/';
-				const listHtml = generateListPage(listRecords, gateway);
-
-				// 上传到 IPFS
-				const uploadResult = await uploadToIpfs(listHtml, 'article-list.html', 'text/html');
-				console.log('[IPFS Publisher] 列表页已上传, CID:', uploadResult.cid);
-
-				// 发布到 IPNS
-				const ipnsResult = await publishToIpns(uploadResult.cid, keyName);
-				console.log('[IPFS Publisher] IPNS 发布成功:', ipnsResult);
-
-				// 获取 IPNS 访问链接
-				const ipnsUrl = await getIpnsUrl(ipnsResult.Name);
-
-				// 保存 IPNS 信息到设置
-				await saveSettings({
-					ipnsKeyName: keyName,
-					ipnsId: ipnsResult.Name,
-					ipnsUrl: ipnsUrl,
-				});
-
-				sendResponse({
-					success: true,
-					data: {
-						cid: uploadResult.cid,
-						ipnsId: ipnsResult.Name,
-						ipnsUrl: ipnsUrl,
-					},
-				});
-			} catch (error: any) {
-				console.error('[IPFS Publisher] IPNS 发布失败:', error);
-				sendResponse({ success: false, error: error.message });
-			}
-		})();
-		return true;
-	}
-});
-
 // ============ 话题列表管理 ============
 
 // 获取所有话题列表
@@ -601,11 +559,15 @@ browserAPI.runtime.onMessage.addListener((request: any, sender, sendResponse) =>
 				const settings = await getSettings();
 				const gateway = settings.gateway || 'https://ipfs.io/ipfs/';
 
-				// 获取话题中的文章
+				// 获取话题中的文章（必须有 ipnsUrl 才能加入列表）
 				const allRecords = await getRecords();
 				const topicRecords = allRecords.filter(
-					r => topic.articleIds.includes(r.id) && r.status === 'published' && r.cid
+					r => topic.articleIds.includes(r.id) && r.status === 'published' && r.cid && r.ipnsUrl
 				);
+
+				if (topicRecords.length === 0) {
+					throw new Error('话题中没有已发布且拥有永久链接的文章。请先发布文章（或重新发布旧文章）以生成永久链接。');
+				}
 
 				// 转换为列表页格式，使用 ipnsUrl 永久链接
 				const listRecords = topicRecords.map(r => ({

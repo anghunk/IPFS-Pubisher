@@ -357,6 +357,8 @@ export function generateTopicListPage(
 						(record) => `
       <a href="${record.ipnsUrl || gateway + record.cid}" target="_blank" class="article-card">
         <h2>${escapeHtml(record.title)}</h2>
+        <div>ipnsUrl: ${record.ipnsUrl}</div>
+        <div>cid: ${gateway}、${record.cid}</div>
         <div class="meta">发布于 ${formatDate(record.createdAt)}</div>
         <p class="preview">${escapeHtml(truncate(record.content, 150))}</p>
       </a>
@@ -581,64 +583,4 @@ export interface ListPageRecord {
 	cid: string;
 	ipnsUrl?: string;
 	createdAt: number;
-}
-
-/**
- * 生成文章列表页 HTML
- * @param records 文章记录列表
- * @param gateway IPFS 网关地址
- */
-export function generateListPage(records: ListPageRecord[], gateway: string): string {
-	const formatDate = (timestamp: number) => {
-		return new Date(timestamp).toLocaleDateString('zh-CN', {
-			year: 'numeric',
-			month: 'long',
-			day: 'numeric',
-		});
-	};
-
-	const truncate = (text: string, length: number) => {
-		return text.length > length ? text.substring(0, length) + '...' : text;
-	};
-
-	const articleCards =
-		records.length > 0
-			? records
-					.map(
-						(record) => `
-      <a href="${gateway}${record.cid}" target="_blank" class="article-card">
-        <h2>${escapeHtml(record.title)}</h2>
-        <div class="meta">发布于 ${formatDate(record.createdAt)}</div>
-        <p class="preview">${escapeHtml(truncate(record.content, 150))}</p>
-      </a>
-    `,
-					)
-					.join('')
-			: '<div class="empty">还没有发布任何文章</div>';
-
-	return `<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>文章列表 - IPFS Publisher</title>
-  <link rel="icon" type="image/png" href="https://github.com/anghunk/IPFS-Publisher/blob/main/public/icon/16.png?raw=true">
-  <style>${listPageStyles}</style>
-</head>
-<body>
-  <div class="container">
-    <header class="header">
-      <div class="logo">📝</div>
-      <h1>文章列表</h1>
-      <p>共 ${records.length} 篇文章 · 更新于 ${new Date().toLocaleDateString('zh-CN')}</p>
-    </header>
-    <div class="article-list">
-      ${articleCards}
-    </div>
-    <footer class="footer">
-      <p>Powered by <a href="https://ipfs.io" target="_blank">IPFS</a> · Published via <a href="https://github.com/anghunk/IPFS-Publisher" target="_blank">IPFS Publisher</a></p>
-    </footer>
-  </div>
-</body>
-</html>`;
 }

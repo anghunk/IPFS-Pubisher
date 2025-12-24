@@ -161,13 +161,10 @@ async function handleSaveDraft() {
 async function handlePublish() {
   if (!canSave.value) return;
 
-  // 检查是否是重新发布（之前已有 ipnsUrl）
-  const isRepublish = !!(editingRecord.value?.ipnsUrl);
-  
   publishing.value = true;
 
   try {
-    // 先保存
+    // 先保存文章
     const savePayload: any = {
       action: "save",
       title: form.value.title.trim(),
@@ -184,30 +181,27 @@ async function handlePublish() {
       throw new Error(saveResponse.error);
     }
 
-    // 然后发布
-    const publishResponse = await chrome.runtime.sendMessage({
-      action: "publishArticle",
-      id: saveResponse.data.id,
+    const articleId = saveResponse.data.id;
+    
+    // 立即更新状态为“发布中”并跳转到列表页
+    await chrome.runtime.sendMessage({
+      action: "updateRecordStatus",
+      id: articleId,
+      status: "publishing",
     });
 
-    if (publishResponse.success) {
-      if (isRepublish && publishResponse.data.ipnsUrl) {
-        // 重新发布，提示 IPNS 传播延迟
-        ElMessage({
-          type: 'success',
-          message: '文章已更新发布！永久链接内容将在约 5 分钟后更新',
-          duration: 5000,
-        });
-      } else {
-        ElMessage.success("文章发布成功！");
-      }
-      router.push("/list");
-    } else {
-      throw new Error(publishResponse.error);
-    }
+    // 跳转到列表页，让用户看到“发布中”状态
+    ElMessage.info("文章正在发布，请稍候...");
+    router.push("/list");
+
+    // 后台异步发布，不阻塞页面跳转
+    chrome.runtime.sendMessage({
+      action: "publishArticle",
+      id: articleId,
+    });
+    
   } catch (error: any) {
-    ElMessage.error("发布失败: " + error.message);
-  } finally {
+    ElMessage.error("保存失败: " + error.message);
     publishing.value = false;
   }
 }

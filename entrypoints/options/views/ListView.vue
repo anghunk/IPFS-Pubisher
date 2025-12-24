@@ -20,18 +20,22 @@
         <h2>{{ $t("list.title") }}</h2>
         <p class="subtitle">
           共 {{ records.length }} 篇文章
-          <span v-if="draftCount > 0" class="draft-count">（{{ draftCount }} 篇待发布）</span>
+          <span v-if="draftCount > 0" class="draft-count"
+            >（{{ draftCount }} 篇待发布）</span
+          >
         </p>
       </div>
       <div class="header-actions">
-        <el-button 
+        <el-button
           v-if="draftCount > 0"
-          type="warning" 
-          @click="publishAllDrafts" 
+          type="warning"
+          @click="publishAllDrafts"
           size="large"
           :loading="publishingAll"
         >
-          {{ publishingAll ? `发布中 (${publishProgress})` : `一键发布全部 (${draftCount})` }}
+          {{
+            publishingAll ? `发布中 (${publishProgress})` : `一键发布全部 (${draftCount})`
+          }}
         </el-button>
         <el-button type="primary" @click="goToEditor" size="large">
           {{ $t("list.newArticle") }}
@@ -48,14 +52,19 @@
     </div>
 
     <div v-else class="record-grid">
-      <div v-for="record in records" :key="record.id" class="record-card" :class="{ 'is-draft': record.status === 'draft' }">
+      <div
+        v-for="record in records"
+        :key="record.id"
+        class="record-card"
+        :class="{ 'is-draft': record.status === 'draft' }"
+      >
         <div class="card-header">
           <div class="title-row">
             <h3>{{ record.title }}</h3>
             <!-- 发布状态标签 -->
-            <el-tag 
-              :type="getStatusType(record.status)" 
-              size="small" 
+            <el-tag
+              :type="getStatusType(record.status)"
+              size="small"
               effect="light"
               class="status-tag"
             >
@@ -64,51 +73,32 @@
           </div>
           <span class="card-date">{{ formatDate(record.createdAt) }}</span>
         </div>
-        
+
         <!-- IPNS 永久链接状态 -->
         <div v-if="record.ipnsUrl && record.status === 'published'" class="ipns-status">
-          <el-tag size="small" type="warning" effect="light">
-            永久链接
-          </el-tag>
+          <el-tag size="small" type="warning" effect="light"> 永久链接 </el-tag>
           <a :href="record.ipnsUrl" target="_blank" class="ipns-link-small">
-            {{ truncate(record.ipnsUrl, 30) }}
+            {{ record.ipnsUrl }}
           </a>
-          <el-button 
-            size="small" 
-            text 
-            @click="copyLink(record.ipnsUrl)"
-            class="copy-ipns-btn"
-          >
-            复制
-          </el-button>
+         
         </div>
-        
+
         <!-- 错误信息 -->
         <div v-if="record.status === 'failed' && record.errorMessage" class="error-info">
           <el-icon><Warning /></el-icon>
           <span>{{ record.errorMessage }}</span>
         </div>
-        
+
         <p class="card-content">{{ truncate(record.content, 120) }}</p>
         <div class="card-footer">
-          <!-- 已发布：优先显示永久链接，否则显示 CID 链接 -->
-          <a v-if="record.status === 'published' && record.ipnsUrl" :href="record.ipnsUrl" target="_blank" class="cid-link permanent-link">
-            <el-icon><Link /></el-icon>
-            永久链接
-          </a>
-          <a v-else-if="record.cid && record.status === 'published'" :href="getRecordUrl(record)" target="_blank" class="cid-link">
-            <el-icon><Link /></el-icon>
-            {{ record.cid.substring(0, 16) }}...
-          </a>
-          <!-- 未发布：显示草稿状态 -->
-          <span v-else class="draft-label">
-            <el-icon><Document /></el-icon>
-            本地草稿
-          </span>
-          
+          <span></span>
+
           <div class="card-actions">
             <!-- 发布按钮（草稿或失败状态显示） -->
-            <el-tooltip v-if="record.status === 'draft' || record.status === 'failed'" content="发布到 IPFS">
+            <el-tooltip
+              v-if="record.status === 'draft' || record.status === 'failed'"
+              content="发布到 IPFS"
+            >
               <el-button
                 size="small"
                 circle
@@ -116,11 +106,14 @@
                 @click="publishSingleArticle(record)"
                 :loading="publishingArticle === record.id"
               >
-                <el-icon><Upload /></el-icon>
+                <el-icon v-if="publishingArticle !== record.id"><Upload /></el-icon>
               </el-button>
             </el-tooltip>
 
-            <el-tooltip v-if="record.status === 'published'" :content="$t('list.preview')">
+            <el-tooltip
+              v-if="record.status === 'published'"
+              :content="$t('list.preview')"
+            >
               <el-button
                 size="small"
                 circle
@@ -130,8 +123,15 @@
                 <el-icon><View /></el-icon>
               </el-button>
             </el-tooltip>
-            <el-tooltip v-if="record.status === 'published'" :content="record.ipnsUrl ? '复制永久链接' : $t('list.copyLink')">
-              <el-button size="small" circle @click="copyLink(record.ipnsUrl || getRecordUrl(record))">
+            <el-tooltip
+              v-if="record.status === 'published'"
+              :content="record.ipnsUrl ? '复制永久链接' : $t('list.copyLink')"
+            >
+              <el-button
+                size="small"
+                circle
+                @click="copyLink(record.ipnsUrl || getRecordUrl(record))"
+              >
                 <el-icon><DocumentCopy /></el-icon>
               </el-button>
             </el-tooltip>
@@ -161,7 +161,17 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
-import { Plus, Link, DocumentCopy, Edit, Delete, View, Upload, Document, Warning } from "@element-plus/icons-vue";
+import {
+  Plus,
+  Link,
+  DocumentCopy,
+  Edit,
+  Delete,
+  View,
+  Upload,
+  Document,
+  Warning,
+} from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 import { useI18n } from "vue-i18n";
 import type { PublishRecord } from "../../../utils/storage";
@@ -181,7 +191,8 @@ const publishProgress = ref("");
 
 // 计算待发布数量
 const draftCount = computed(() => {
-  return records.value.filter(r => r.status === 'draft' || r.status === 'failed').length;
+  return records.value.filter((r) => r.status === "draft" || r.status === "failed")
+    .length;
 });
 
 onMounted(async () => {
@@ -284,30 +295,30 @@ function truncate(text: string, length: number): string {
 // 获取状态标签类型
 function getStatusType(status: string): string {
   const types: Record<string, string> = {
-    draft: 'info',
-    publishing: 'warning',
-    published: 'success',
-    failed: 'danger',
+    draft: "info",
+    publishing: "warning",
+    published: "success",
+    failed: "danger",
   };
-  return types[status] || 'info';
+  return types[status] || "info";
 }
 
 // 获取状态文本
 function getStatusText(status: string): string {
   const texts: Record<string, string> = {
-    draft: '草稿',
-    publishing: '发布中',
-    published: '已发布',
-    failed: '发布失败',
+    draft: "草稿",
+    publishing: "发布中",
+    published: "已发布",
+    failed: "发布失败",
   };
-  return texts[status] || '未知';
+  return texts[status] || "未知";
 }
 
 // 发布单篇文章到 IPFS
 async function publishSingleArticle(record: PublishRecord) {
   // 检查是否是重新发布（之前已有 ipnsUrl）
   const isRepublish = !!record.ipnsUrl;
-  
+
   publishingArticle.value = record.id;
   try {
     const response = await chrome.runtime.sendMessage({
@@ -318,13 +329,14 @@ async function publishSingleArticle(record: PublishRecord) {
     if (response.success) {
       // 重新加载记录
       await loadRecords();
-      
+
       if (response.data.ipnsUrl) {
         if (isRepublish) {
           // 重新发布，提示 IPNS 传播延迟
           ElMessage({
-            type: 'success',
-            message: '文章已更新发布！永久链接内容将在约 5 分钟后更新（IPNS 网络传播需要时间）',
+            type: "success",
+            message:
+              "文章已更新发布！永久链接内容将在约 5 分钟后更新（IPNS 网络传播需要时间）",
             duration: 5000,
           });
         } else {
@@ -348,15 +360,15 @@ async function publishSingleArticle(record: PublishRecord) {
 async function publishAllDrafts() {
   publishingAll.value = true;
   const total = draftCount.value;
-  
+
   // 检查是否有重新发布的文章
-  const hasRepublish = records.value.some(r => 
-    (r.status === 'draft' || r.status === 'failed') && r.ipnsUrl
+  const hasRepublish = records.value.some(
+    (r) => (r.status === "draft" || r.status === "failed") && r.ipnsUrl
   );
-  
+
   try {
     publishProgress.value = `0/${total}`;
-    
+
     const response = await chrome.runtime.sendMessage({
       action: "publishAllArticles",
     });
@@ -364,13 +376,13 @@ async function publishAllDrafts() {
     if (response.success) {
       const { published, failed } = response.data;
       await loadRecords();
-      
+
       if (failed > 0) {
         ElMessage.warning(`发布完成：${published} 篇成功，${failed} 篇失败`);
       } else if (hasRepublish) {
         // 有重新发布的文章，提示 IPNS 传播延迟
         ElMessage({
-          type: 'success',
+          type: "success",
           message: `成功发布 ${published} 篇文章！永久链接内容将在约 5 分钟后更新`,
           duration: 5000,
         });
@@ -388,8 +400,6 @@ async function publishAllDrafts() {
     publishProgress.value = "";
   }
 }
-
-
 </script>
 
 <style scoped lang="less">
@@ -460,13 +470,13 @@ async function publishAllDrafts() {
     margin: 0;
     font-size: 14px;
     color: #6b7280;
-    
+
     .draft-count {
       color: @primary-dark;
       font-weight: 500;
     }
   }
-  
+
   .header-actions {
     display: flex;
     gap: 12px;
@@ -493,7 +503,7 @@ async function publishAllDrafts() {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
   border: 1px solid #e5e7eb;
   transition: all 0.2s;
-  
+
   &.is-draft {
     border-left: 3px solid #9ca3af;
   }
@@ -508,13 +518,13 @@ async function publishAllDrafts() {
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 12px;
-    
+
     .title-row {
       display: flex;
       align-items: center;
       gap: 8px;
       flex: 1;
-      
+
       h3 {
         margin: 0;
         font-size: 16px;
@@ -522,7 +532,7 @@ async function publishAllDrafts() {
         font-weight: 600;
         line-height: 1.4;
       }
-      
+
       .status-tag {
         flex-shrink: 0;
       }
@@ -535,7 +545,7 @@ async function publishAllDrafts() {
       margin-left: 12px;
     }
   }
-  
+
   .error-info {
     display: flex;
     align-items: center;
@@ -548,7 +558,7 @@ async function publishAllDrafts() {
     color: #dc2626;
     font-size: 12px;
   }
-  
+
   .draft-label {
     display: flex;
     align-items: center;
@@ -566,11 +576,11 @@ async function publishAllDrafts() {
     background: #fffbeb;
     border-radius: 6px;
     border: 1px solid #fde68a;
-    
+
     .tag-icon {
       margin-right: 2px;
     }
-    
+
     .ipns-link-small {
       flex: 1;
       font-size: 11px;
@@ -579,17 +589,17 @@ async function publishAllDrafts() {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      
+
       &:hover {
         text-decoration: underline;
       }
     }
-    
+
     .copy-ipns-btn {
       font-size: 11px;
       padding: 2px 6px;
       color: #9ca3af;
-      
+
       &:hover {
         color: @primary-dark;
       }
